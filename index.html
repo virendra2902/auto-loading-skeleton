@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>auto-loading-skeleton — Interactive Demo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f8fafc; --bg3: #f1f5f9;
+  --txt: #0f172a; --txt2: #64748b; --txt3: #94a3b8;
+  --border: rgba(15,23,42,0.1); --border2: rgba(15,23,42,0.18);
+  --accent: #6366f1; --accent2: #818cf8;
+  --green: #22c55e; --amber: #f59e0b; --red: #ef4444;
+  --r: 8px; --rl: 14px;
+  --font: 'Sora', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --ask-base: #e2e8f0; --ask-shimmer: rgba(255,255,255,0.65); --ask-dur: 1.4s;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a; --bg2: #1e293b; --bg3: #162032;
+    --txt: #f1f5f9; --txt2: #94a3b8; --txt3: #475569;
+    --border: rgba(241,245,249,0.1); --border2: rgba(241,245,249,0.18);
+    --ask-base: #1e293b; --ask-shimmer: rgba(255,255,255,0.06);
+  }
+}
+body { font-family: var(--font); background: var(--bg3); color: var(--txt); min-height: 100vh; }
+
+/* ── PAGE LAYOUT ── */
+.page { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+/* ── HERO ── */
+.hero { text-align: center; padding: 2.5rem 1rem 2rem; }
+.hero-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 0.5px solid var(--border2); border-radius: 20px; padding: 5px 14px; font-size: 11px; font-family: var(--mono); color: var(--txt2); margin-bottom: 1.25rem; }
+.hero-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pdot 2s ease-in-out infinite; }
+@keyframes pdot { 0%,100%{opacity:1} 50%{opacity:.3} }
+.hero h1 { font-size: clamp(26px,5vw,40px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: .6rem; }
+.hero h1 em { font-style: normal; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero p { font-size: 15px; color: var(--txt2); max-width: 520px; margin: 0 auto 1.75rem; line-height: 1.65; }
+.install-box { display: inline-flex; align-items: center; gap: 10px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--r); padding: 10px 16px; font-family: var(--mono); font-size: 13px; color: var(--txt2); cursor: pointer; transition: border-color .2s; }
+.install-box:hover { border-color: var(--border2); }
+.install-box code { color: var(--txt); }
+.install-box .copy-hint { font-size: 11px; opacity: .5; }
+
+/* ── CARD ── */
+.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rl); overflow: hidden; margin-bottom: 1.5rem; }
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 0.5px solid var(--border); }
+.card-title { font-size: 12px; font-family: var(--mono); color: var(--txt2); display: flex; align-items: center; gap: 7px; }
+.card-title .indicator { width: 7px; height: 7px; border-radius: 50%; }
+.card-body { padding: 16px; }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 0; border-bottom: 0.5px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; background: var(--bg); border-radius: var(--rl) var(--rl) 0 0; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { padding: 11px 18px; font-size: 13px; font-family: var(--font); font-weight: 500; color: var(--txt2); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -0.5px; white-space: nowrap; transition: color .15s, border-color .15s; }
+.tab:hover { color: var(--txt); }
+.tab.active { color: var(--txt); border-bottom-color: var(--accent); }
+.panel { display: none; padding: 20px; }
+.panel.active { display: block; }
+
+/* ── DEMO CONTROLS ── */
+.controls { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.toggle-wrap { display: flex; align-items: center; gap: 8px; }
+.toggle-label { font-size: 13px; color: var(--txt2); }
+.toggle-label strong { color: var(--txt); }
+.toggle { position: relative; width: 38px; height: 22px; cursor: pointer; display: inline-block; }
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.tslider { position: absolute; inset: 0; background: var(--border2); border-radius: 11px; transition: .2s; }
+.tslider:before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.toggle input:checked + .tslider { background: var(--accent); }
+.toggle input:checked + .tslider:before { transform: translateX(16px); }
+.anim-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+.anim-pill { font-size: 11px; font-family: var(--mono); padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--bg); color: var(--txt2); cursor: pointer; transition: all .15s; }
+.anim-pill.active, .anim-pill:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.spacer { flex: 1; }
+
+/* ── DEMO GRID ── */
+.demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .demo-grid { grid-template-columns: 1fr; } }
+.demo-component { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rl); overflow: hidden; }
+.demo-component .header { padding: 9px 14px; border-bottom: 0.5px solid var(--border); font-size: 11px; font-family: var(--mono); color: var(--txt2); display: flex; align-items: center; gap: 7px; }
+.demo-component .body { padding: 14px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; transition: background .3s; }
+
+/* ── SKELETON CSS ── */
+.ask { display: block; position: relative; overflow: hidden; background: var(--ask-base); border-radius: 4px; vertical-align: middle; }
+.ask.shimmer::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent 0%, var(--ask-shimmer) 50%, transparent 100%); animation: sk-shimmer var(--ask-dur) infinite; }
+@keyframes sk-shimmer { 100% { transform: translateX(100%); } }
+.ask.pulse { animation: sk-pulse var(--ask-dur) ease-in-out infinite; }
+@keyframes sk-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.ask.wave::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--ask-shimmer), transparent); animation: sk-wave calc(var(--ask-dur)*1.1) ease-in-out infinite; overflow: hidden; }
+@keyframes sk-wave { 0%{transform:translateX(-100%)} 100%{transform:translateX(150%)} }
+.ask.none { opacity: .55; }
+.ask.circle { border-radius: 50%; }
+.ask.pill { border-radius: 9999px; }
+.ask.rounded { border-radius: 8px; }
+
+/* ── REAL COMPONENTS ── */
+.pc { display: flex; flex-direction: column; gap: 10px; }
+.pc-img { width: 100%; height: 110px; background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 28px; }
+.pc-badge { display: inline-flex; background: #ede9fe; color: #5b21b6; font-size: 10px; padding: 2px 9px; border-radius: 20px; font-weight: 600; align-self: flex-start; }
+@media(prefers-color-scheme:dark){.pc-badge{background:#2e1065;color:#c4b5fd}}
+.pc-title { font-size: 14px; font-weight: 600; }
+.pc-sub { font-size: 11px; color: var(--txt2); line-height: 1.55; }
+.pc-row { display: flex; align-items: center; justify-content: space-between; }
+.pc-price { font-size: 15px; font-weight: 700; }
+.pc-btn { font-size: 11px; background: var(--accent); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: var(--font); }
+
+.prf { display: flex; gap: 11px; align-items: flex-start; }
+.prf-av { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #3b82f6); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 15px; }
+.prf-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.prf-role { font-size: 11px; color: var(--txt2); margin-bottom: 7px; }
+.prf-bio { font-size: 11px; color: var(--txt2); line-height: 1.55; margin-bottom: 8px; }
+.prf-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.tag { background: var(--bg2); border: 0.5px solid var(--border); color: var(--txt2); font-size: 10px; padding: 2px 7px; border-radius: 20px; }
+
+.art { display: flex; flex-direction: column; gap: 8px; }
+.art-meta { display: flex; align-items: center; gap: 7px; }
+.art-av { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); flex-shrink: 0; }
+.art-author { font-size: 11px; color: var(--txt2); }
+.art-title { font-size: 13px; font-weight: 600; line-height: 1.4; }
+.art-body { font-size: 11px; line-height: 1.6; color: var(--txt2); }
+.art-img { width: 100%; height: 72px; background: linear-gradient(135deg, #f59e0b, #ef4444); border-radius: 6px; }
+.art-footer { display: flex; gap: 10px; font-size: 10px; color: var(--txt2); }
+
+/* ── CODE ── */
+.code-block { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--rl); overflow: hidden; margin-bottom: 1.25rem; }
+.code-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; border-bottom: 0.5px solid var(--border); font-size: 11px; font-family: var(--mono); color: var(--txt2); }
+.code-header .filename { display: flex; align-items: center; gap: 5px; }
+.copy-btn { font-size: 10px; background: var(--bg); border: 0.5px solid var(--border); border-radius: 4px; padding: 3px 8px; cursor: pointer; color: var(--txt2); font-family: var(--mono); transition: color .15s; }
+.copy-btn:hover { color: var(--txt); }
+pre { padding: 14px; overflow-x: auto; font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--txt); }
+.k { color: #8b5cf6; } .s { color: #10b981; } .c { color: var(--txt3); } .t { color: #f59e0b; } .a { color: #6366f1; } .p { color: var(--txt); }
+
+/* ── API TABLE ── */
+.api-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.api-table th { text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--txt2); border-bottom: 0.5px solid var(--border); background: var(--bg2); }
+.api-table td { padding: 10px 12px; border-bottom: 0.5px solid var(--border); vertical-align: top; }
+.api-table tr:last-child td { border-bottom: none; }
+.prop-name { font-family: var(--mono); color: #6366f1; }
+.prop-type { font-family: var(--mono); color: var(--txt2); font-size: 11px; }
+.req { display: inline-block; background: #fef2f2; color: #b91c1c; font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-left: 4px; font-weight: 600; vertical-align: middle; }
+@media(prefers-color-scheme:dark){.req{background:#450a0a;color:#fca5a5}}
+.desc-cell { font-size: 11px; color: var(--txt2); line-height: 1.5; }
+
+/* ── HOW IT WORKS ── */
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 1.25rem 0; }
+@media(max-width:600px){ .steps { grid-template-columns: 1fr 1fr; } }
+.step { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--rl); padding: 14px 12px; text-align: center; }
+.step.accent { background: #eef2ff; border-color: #c7d2fe; }
+@media(prefers-color-scheme:dark){.step.accent{background:#1e1b4b;border-color:#3730a3}}
+.step-num { font-size: 10px; font-family: var(--mono); color: var(--txt3); margin-bottom: 6px; }
+.step-icon { font-size: 20px; margin-bottom: 8px; line-height: 1; }
+.step-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.step-desc { font-size: 10px; color: var(--txt2); line-height: 1.5; }
+
+.map-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 1rem 0; }
+.map-table th { text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--txt2); border-bottom: 0.5px solid var(--border); background: var(--bg2); }
+.map-table td { padding: 9px 12px; border-bottom: 0.5px solid var(--border); font-size: 11px; vertical-align: middle; }
+.map-table tr:last-child td { border-bottom: none; }
+.sk-shape-pill { display: inline-block; background: var(--accent); opacity: .4; border-radius: 9999px; }
+.sk-shape-rect { display: inline-block; background: var(--accent); opacity: .4; border-radius: 4px; }
+.sk-shape-circle { display: inline-block; background: var(--accent); opacity: .4; border-radius: 50%; }
+
+/* ── COMPARE ── */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 1rem 0; }
+@media(max-width:500px){ .compare { grid-template-columns: 1fr; } }
+.compare-col { border: 0.5px solid var(--border); border-radius: var(--rl); overflow: hidden; }
+.compare-head { padding: 9px 13px; font-size: 12px; font-weight: 600; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 7px; }
+.compare-head.bad { background: #fef2f2; color: #991b1b; }
+.compare-head.good { background: #f0fdf4; color: #14532d; }
+@media(prefers-color-scheme:dark){ .compare-head.bad{background:#450a0a;color:#fca5a5} .compare-head.good{background:#052e16;color:#86efac} }
+.compare-body { padding: 12px; }
+.ci { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--txt2); padding: 5px 0; border-bottom: 0.5px solid var(--border); }
+.ci:last-child { border-bottom: none; }
+.ci-icon { flex-shrink: 0; font-size: 13px; }
+
+/* ── FEAT GRID ── */
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; margin: 1rem 0; }
+.feat-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--rl); padding: 14px; }
+.feat-icon { font-size: 18px; margin-bottom: 8px; }
+.feat-title { font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+.feat-desc { font-size: 11px; color: var(--txt2); line-height: 1.5; }
+
+.section-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--txt2); margin-bottom: 10px; }
+.section-desc { font-size: 13px; color: var(--txt2); line-height: 1.65; margin-bottom: 1rem; }
+
+/* ── FOOTER ── */
+.footer { text-align: center; font-size: 12px; color: var(--txt3); margin-top: 3rem; padding-top: 1.5rem; border-top: 0.5px solid var(--border); }
+.footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><span class="dot"></span> auto-loading-skeleton · v1.0.0</div>
+  <h1>Auto <em>Skeleton</em> Generator</h1>
+  <p>Wrap any React component and get a pixel-perfect loading skeleton — automatically. No duplicate components, no layout drift, no wasted hours.</p>
+  <div class="install-box" onclick="copyInstall(this)">
+    <code>npm install auto-loading-skeleton</code>
+    <span class="copy-hint">click to copy</span>
+  </div>
+</div>
+
+<!-- MAIN CARD -->
+<div class="card">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('demo',this)">Live Demo</button>
+    <button class="tab" onclick="switchTab('api',this)">API Reference</button>
+    <button class="tab" onclick="switchTab('code',this)">Usage</button>
+    <button class="tab" onclick="switchTab('how',this)">How It Works</button>
+  </div>
+
+  <!-- DEMO PANEL -->
+  <div class="panel active" id="tab-demo">
+    <div class="controls">
+      <div class="toggle-wrap">
+        <label class="toggle">
+          <input type="checkbox" id="loading-tog" checked onchange="rerender()">
+          <span class="tslider"></span>
+        </label>
+        <span class="toggle-label">loading = <strong id="lbl">true</strong></span>
+      </div>
+      <div class="anim-pills" id="anim-pills">
+        <button class="anim-pill active" onclick="setAnim('shimmer',this)">shimmer</button>
+        <button class="anim-pill" onclick="setAnim('pulse',this)">pulse</button>
+        <button class="anim-pill" onclick="setAnim('wave',this)">wave</button>
+        <button class="anim-pill" onclick="setAnim('none',this)">none</button>
+      </div>
+    </div>
+
+    <div class="demo-grid">
+      <div class="demo-component">
+        <div class="header"><span class="status-dot" id="dot-p" style="background:var(--amber)"></span>ProductCard</div>
+        <div class="body" id="slot-p"></div>
+      </div>
+      <div class="demo-component">
+        <div class="header"><span class="status-dot" id="dot-prf" style="background:var(--amber)"></span>ProfileCard</div>
+        <div class="body" id="slot-prf"></div>
+      </div>
+      <div class="demo-component">
+        <div class="header"><span class="status-dot" id="dot-a" style="background:var(--amber)"></span>ArticleCard</div>
+        <div class="body" id="slot-a"></div>
+      </div>
+      <div class="demo-component">
+        <div class="header"><span class="status-dot" id="dot-c" style="background:var(--amber)"></span>count={3} · ProductRow</div>
+        <div class="body" id="slot-c"></div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--txt3);text-align:center;margin-top:10px">Toggle <code style="font-family:var(--mono);background:var(--bg2);padding:1px 5px;border-radius:3px">loading</code> to see the live transition. Switch animation style above.</p>
+  </div>
+
+  <!-- API PANEL -->
+  <div class="panel" id="tab-api">
+    <div class="section-label">AutoSkeleton Props</div>
+    <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:1.5rem">
+      <table class="api-table">
+        <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="prop-name">loading</span><span class="req">required</span></td><td><span class="prop-type">boolean</span></td><td>—</td><td class="desc-cell">When true, renders the skeleton. When false, renders children as-is.</td></tr>
+          <tr><td><span class="prop-name">animation</span></td><td><span class="prop-type">'shimmer' | 'pulse' | 'wave' | 'none'</span></td><td><span class="prop-type">'shimmer'</span></td><td class="desc-cell">Animation style applied to all skeleton blocks.</td></tr>
+          <tr><td><span class="prop-name">count</span></td><td><span class="prop-type">number</span></td><td><span class="prop-type">1</span></td><td class="desc-cell">Repeats the skeleton pattern N times. Perfect for list placeholders.</td></tr>
+          <tr><td><span class="prop-name">theme</span></td><td><span class="prop-type">ThemeObject</span></td><td><span class="prop-type">{}</span></td><td class="desc-cell">CSS variable overrides: baseColor, shimmerColor, duration, borderRadius.</td></tr>
+          <tr><td><span class="prop-name">className</span></td><td><span class="prop-type">string</span></td><td><span class="prop-type">''</span></td><td class="desc-cell">Extra CSS class added to the wrapper element.</td></tr>
+          <tr><td><span class="prop-name">children</span></td><td><span class="prop-type">ReactNode</span></td><td>—</td><td class="desc-cell">The real component(s) to render when loading is false.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-label">Additional Exports</div>
+    <div class="feat-grid">
+      <div class="feat-card"><div class="feat-icon">🦴</div><div class="feat-title">SkeletonBlock</div><div class="feat-desc">Single configurable block. Props: width, height, shape (circle/pill/rounded), animation.</div></div>
+      <div class="feat-card"><div class="feat-icon">📝</div><div class="feat-title">SkeletonText</div><div class="feat-desc">Multi-line text placeholder. Control lines, lastLineWidth, lineHeight, gap.</div></div>
+      <div class="feat-card"><div class="feat-icon">👤</div><div class="feat-title">SkeletonAvatar</div><div class="feat-desc">Circular avatar placeholder. Pass a size prop for quick setup.</div></div>
+      <div class="feat-card"><div class="feat-icon">🎣</div><div class="feat-title">useSkeleton</div><div class="feat-desc">Hook returning {loading, setLoading, skeletonProps} for ergonomic usage.</div></div>
+      <div class="feat-card"><div class="feat-icon">🪄</div><div class="feat-title">withSkeleton</div><div class="feat-desc">HOC wrapper for class components or setting package-level defaults.</div></div>
+    </div>
+  </div>
+
+  <!-- CODE PANEL -->
+  <div class="panel" id="tab-code">
+    <div class="section-label">Basic Usage</div>
+    <div class="code-block">
+      <div class="code-header"><span class="filename">ProductPage.jsx</span><button class="copy-btn" onclick="copyCode('code1',this)">copy</button></div>
+      <pre id="code1"><span class="k">import</span> <span class="p">{ AutoSkeleton }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton'</span><span class="p">;</span>
+
+<span class="k">function</span> <span class="t">ProductPage</span><span class="p">() {</span>
+  <span class="k">const</span> <span class="p">{ loading, data } =</span> <span class="t">useFetch</span><span class="p">('/api/product');</span>
+
+  <span class="k">return</span> <span class="p">(</span>
+    <span class="a">&lt;AutoSkeleton</span> <span class="t">loading</span><span class="p">={loading}</span> <span class="t">animation</span><span class="p">=</span><span class="s">"shimmer"</span><span class="a">&gt;</span>
+      <span class="a">&lt;ProductCard</span> <span class="t">product</span><span class="p">={data}</span> <span class="a">/&gt;</span>
+    <span class="a">&lt;/AutoSkeleton&gt;</span>
+  <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">// Before: every developer wrote this manually ❌</span>
+<span class="c">// {loading ? &lt;SkeletonCard /&gt; : &lt;ProductCard product={data} /&gt;}</span></pre>
+    </div>
+
+    <div class="section-label">useSkeleton Hook</div>
+    <div class="code-block">
+      <div class="code-header"><span class="filename">UserProfile.jsx</span><button class="copy-btn" onclick="copyCode('code2',this)">copy</button></div>
+      <pre id="code2"><span class="k">import</span> <span class="p">{ AutoSkeleton, useSkeleton }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton'</span><span class="p">;</span>
+
+<span class="k">function</span> <span class="t">UserProfile</span><span class="p">() {</span>
+  <span class="k">const</span> <span class="p">{ loading, setLoading, skeletonProps } =</span> <span class="t">useSkeleton</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+
+  <span class="t">useEffect</span><span class="p">(() =&gt; {</span>
+    <span class="t">fetchUser</span><span class="p">().</span><span class="t">then</span><span class="p">(() =&gt;</span> <span class="t">setLoading</span><span class="p">(</span><span class="k">false</span><span class="p">));</span>
+  <span class="p">}, []);</span>
+
+  <span class="k">return</span> <span class="p">(</span>
+    <span class="a">&lt;AutoSkeleton</span> <span class="p">{...skeletonProps}</span><span class="a">&gt;</span>
+      <span class="a">&lt;ProfileCard</span> <span class="t">user</span><span class="p">={user}</span> <span class="a">/&gt;</span>
+    <span class="a">&lt;/AutoSkeleton&gt;</span>
+  <span class="p">);</span>
+<span class="p">}</span></pre>
+    </div>
+
+    <div class="section-label">List with count + Custom Theme</div>
+    <div class="code-block">
+      <div class="code-header"><span class="filename">ProductList.jsx</span><button class="copy-btn" onclick="copyCode('code3',this)">copy</button></div>
+      <pre id="code3"><span class="c">// Renders 5 skeleton copies while loading</span>
+<span class="a">&lt;AutoSkeleton</span>
+  <span class="t">loading</span><span class="p">={loading}</span>
+  <span class="t">count</span><span class="p">={5}</span>
+  <span class="t">animation</span><span class="p">=</span><span class="s">"pulse"</span>
+  <span class="t">theme</span><span class="p">={{</span>
+    <span class="t">baseColor</span><span class="p">:</span>    <span class="s">'#f0f4ff'</span><span class="p">,</span>
+    <span class="t">shimmerColor</span><span class="p">:</span> <span class="s">'rgba(255,255,255,0.8)'</span><span class="p">,</span>
+    <span class="t">duration</span><span class="p">:</span>     <span class="s">'1.8s'</span><span class="p">,</span>
+    <span class="t">borderRadius</span><span class="p">:</span> <span class="s">'8px'</span>
+  <span class="p">}}</span>
+<span class="a">&gt;</span>
+  <span class="a">&lt;ProductCard</span> <span class="a">/&gt;</span>
+<span class="a">&lt;/AutoSkeleton&gt;</span></pre>
+    </div>
+
+    <div class="section-label">withSkeleton HOC</div>
+    <div class="code-block">
+      <div class="code-header"><span class="filename">EnhancedCard.js</span><button class="copy-btn" onclick="copyCode('code4',this)">copy</button></div>
+      <pre id="code4"><span class="k">import</span> <span class="p">{ withSkeleton }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton'</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="t">EnhancedProductCard</span> <span class="p">=</span> <span class="t">withSkeleton</span><span class="p">(ProductCard, {</span>
+  <span class="t">animation</span><span class="p">:</span> <span class="s">'shimmer'</span><span class="p">,</span>
+  <span class="t">count</span><span class="p">:</span> <span class="k">1</span>
+<span class="p">});</span>
+
+<span class="c">// Usage: pass loading as prop directly</span>
+<span class="a">&lt;EnhancedProductCard</span> <span class="t">loading</span><span class="p">={loading}</span> <span class="t">product</span><span class="p">={data}</span> <span class="a">/&gt;</span></pre>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS PANEL -->
+  <div class="panel" id="tab-how">
+    <div class="section-label">Pipeline</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">step 1</div>
+        <div class="step-icon">🌳</div>
+        <div class="step-title">Parse tree</div>
+        <div class="step-desc">Recursively traverse the React element tree via analyzeElement()</div>
+      </div>
+      <div class="step accent">
+        <div class="step-num">step 2</div>
+        <div class="step-icon">🔍</div>
+        <div class="step-title">Infer types</div>
+        <div class="step-desc">Detect text, image, avatar, button, input, icon, container nodes</div>
+      </div>
+      <div class="step">
+        <div class="step-num">step 3</div>
+        <div class="step-icon">🎨</div>
+        <div class="step-title">Render blocks</div>
+        <div class="step-desc">Replace each node with an appropriate skeleton shape, preserving layout</div>
+      </div>
+      <div class="step">
+        <div class="step-num">step 4</div>
+        <div class="step-icon">✨</div>
+        <div class="step-title">Animate</div>
+        <div class="step-desc">Inject minimal CSS (once) for shimmer / pulse / wave animations</div>
+      </div>
+    </div>
+
+    <div class="section-label">Node Type Detection</div>
+    <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:1.5rem">
+      <table class="map-table">
+        <thead><tr><th>Source element</th><th>Skeleton shape</th><th>Detection signal</th></tr></thead>
+        <tbody>
+          <tr><td>String / number child</td><td><span class="sk-shape-rect" style="width:40px;height:10px"></span> gray lines</td><td style="color:var(--txt2)">typeof children === 'string'</td></tr>
+          <tr><td>&lt;h1&gt;–&lt;h6&gt; heading</td><td><span class="sk-shape-rect" style="width:60px;height:12px"></span> wider line</td><td style="color:var(--txt2)">tag matches /^h[1-6]$/</td></tr>
+          <tr><td>&lt;img&gt;</td><td><span class="sk-shape-rect" style="width:50px;height:30px;border-radius:6px"></span> rect</td><td style="color:var(--txt2)">tag === 'img'</td></tr>
+          <tr><td>Avatar img / .avatar class</td><td><span class="sk-shape-circle" style="width:26px;height:26px"></span> circle</td><td style="color:var(--txt2)">className.includes('avatar')</td></tr>
+          <tr><td>&lt;button&gt; / role=button</td><td><span class="sk-shape-pill" style="width:55px;height:18px"></span> pill</td><td style="color:var(--txt2)">tag === 'button' || role</td></tr>
+          <tr><td>&lt;input&gt; / &lt;textarea&gt;</td><td><span class="sk-shape-rect" style="width:80px;height:18px;border-radius:6px"></span> rounded</td><td style="color:var(--txt2)">tag === 'input/textarea'</td></tr>
+          <tr><td>&lt;svg&gt; / .icon class</td><td><span class="sk-shape-circle" style="width:16px;height:16px"></span> small circle</td><td style="color:var(--txt2)">tag === 'svg' || .icon</td></tr>
+          <tr><td>Container &lt;div&gt;</td><td><span style="font-size:11px;color:var(--txt2)">layout wrapper — recurse</span></td><td style="color:var(--txt2)">Traverses children</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-label">Before vs After</div>
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-head bad">✕ &nbsp;Manual approach</div>
+        <div class="compare-body">
+          <div class="ci"><span class="ci-icon">✕</span><span>Duplicate component structure by hand</span></div>
+          <div class="ci"><span class="ci-icon">✕</span><span>Maintain two files: &lt;Card&gt; + &lt;CardSkeleton&gt;</span></div>
+          <div class="ci"><span class="ci-icon">✕</span><span>UI mismatch when real component changes</span></div>
+          <div class="ci"><span class="ci-icon">✕</span><span>Hours spent on placeholders instead of features</span></div>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-head good">✓ &nbsp;auto-loading-skeleton</div>
+        <div class="compare-body">
+          <div class="ci"><span class="ci-icon">✓</span><span>One wrapper, zero extra files needed</span></div>
+          <div class="ci"><span class="ci-icon">✓</span><span>Auto-syncs if real component changes</span></div>
+          <div class="ci"><span class="ci-icon">✓</span><span>Pixel-perfect layout and spacing preserved</span></div>
+          <div class="ci"><span class="ci-icon">✓</span><span>Ships in seconds, not hours</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Built with React ≥ 16.8 · Zero dependencies · MIT License · <a href="#">npm</a> · <a href="#">GitHub</a>
+</div>
+
+</div><!-- /page -->
+
+<script>
+let currentAnim = 'shimmer';
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function setAnim(anim, btn) {
+  currentAnim = anim;
+  document.querySelectorAll('.anim-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  rerender();
+}
+
+function sk(shape) {
+  const base = 'ask ' + currentAnim;
+  return shape ? base + ' ' + shape : base;
+}
+
+function rerender() {
+  const loading = document.getElementById('loading-tog').checked;
+  document.getElementById('lbl').textContent = String(loading);
+  ['p','prf','a','c'].forEach(id => {
+    document.getElementById('dot-' + id).style.background = loading ? 'var(--amber)' : 'var(--green)';
+  });
+  renderProduct(loading);
+  renderProfile(loading);
+  renderArticle(loading);
+  renderCount(loading);
+}
+
+function renderProduct(loading) {
+  const el = document.getElementById('slot-p');
+  if (!loading) {
+    el.innerHTML = `<div class="pc">
+      <div class="pc-img">🎧</div>
+      <span class="pc-badge">New</span>
+      <div class="pc-title">Premium Wireless Headphones</div>
+      <div class="pc-sub">Noise-cancelling, 30hr battery, spatial audio support.</div>
+      <div class="pc-row"><span class="pc-price">$249.00</span><button class="pc-btn">Add to cart</button></div>
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="pc">
+      <span class="${sk('rounded')}" style="width:100%;height:110px"></span>
+      <span class="${sk('pill')}" style="width:55px;height:18px"></span>
+      <span class="${sk()}" style="width:80%;height:1em"></span>
+      <div><span class="${sk()}" style="width:100%;height:.85em;display:block;margin-bottom:5px"></span>
+           <span class="${sk()}" style="width:65%;height:.85em;display:block"></span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="${sk()}" style="width:65px;height:1.1em"></span>
+        <span class="${sk('pill')}" style="width:80px;height:28px"></span>
+      </div>
+    </div>`;
+  }
+}
+
+function renderProfile(loading) {
+  const el = document.getElementById('slot-prf');
+  if (!loading) {
+    el.innerHTML = `<div class="prf">
+      <div class="prf-av">AK</div>
+      <div style="flex:1;min-width:0">
+        <div class="prf-name">Arjun Kumar</div>
+        <div class="prf-role">Senior Frontend Engineer</div>
+        <div class="prf-bio">Building open-source tools for developers. Coffee addict. Ex-Flipkart, Ex-Razorpay.</div>
+        <div class="prf-tags"><span class="tag">React</span><span class="tag">TypeScript</span><span class="tag">Design systems</span></div>
+      </div>
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="prf">
+      <span class="${sk('circle')}" style="width:46px;height:46px;flex-shrink:0"></span>
+      <div style="flex:1;min-width:0">
+        <span class="${sk()}" style="width:60%;height:1em;display:block;margin-bottom:6px"></span>
+        <span class="${sk()}" style="width:45%;height:.8em;display:block;margin-bottom:10px"></span>
+        <span class="${sk()}" style="width:100%;height:.75em;display:block;margin-bottom:5px"></span>
+        <span class="${sk()}" style="width:80%;height:.75em;display:block;margin-bottom:10px"></span>
+        <div style="display:flex;gap:5px">
+          <span class="${sk('pill')}" style="width:45px;height:18px"></span>
+          <span class="${sk('pill')}" style="width:65px;height:18px"></span>
+          <span class="${sk('pill')}" style="width:80px;height:18px"></span>
+        </div>
+      </div>
+    </div>`;
+  }
+}
+
+function renderArticle(loading) {
+  const el = document.getElementById('slot-a');
+  if (!loading) {
+    el.innerHTML = `<div class="art">
+      <div class="art-meta"><div class="art-av"></div><span class="art-author">Priya Sharma</span><span class="art-author" style="opacity:.6">· 4 min</span></div>
+      <div class="art-title">Why every developer should know about skeleton screens</div>
+      <div class="art-body">Skeleton screens show a simplified version while content loads, dramatically improving perceived performance and reducing abandonment rates…</div>
+      <div class="art-img"></div>
+      <div class="art-footer"><span>128 likes</span><span>24 comments</span><span>Save</span></div>
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="art">
+      <div style="display:flex;align-items:center;gap:7px">
+        <span class="${sk('circle')}" style="width:26px;height:26px;flex-shrink:0"></span>
+        <span class="${sk()}" style="width:70px;height:.75em"></span>
+        <span class="${sk()}" style="width:40px;height:.75em"></span>
+      </div>
+      <span class="${sk()}" style="width:90%;height:.95em;display:block"></span>
+      <span class="${sk()}" style="width:65%;height:.95em;display:block"></span>
+      <div>
+        <span class="${sk()}" style="width:100%;height:.75em;display:block;margin-bottom:5px"></span>
+        <span class="${sk()}" style="width:90%;height:.75em;display:block;margin-bottom:5px"></span>
+        <span class="${sk()}" style="width:60%;height:.75em;display:block"></span>
+      </div>
+      <span class="${sk('rounded')}" style="width:100%;height:72px;display:block"></span>
+      <div style="display:flex;gap:8px">
+        <span class="${sk('pill')}" style="width:50px;height:14px"></span>
+        <span class="${sk('pill')}" style="width:60px;height:14px"></span>
+        <span class="${sk('pill')}" style="width:35px;height:14px"></span>
+      </div>
+    </div>`;
+  }
+}
+
+function renderCount(loading) {
+  const el = document.getElementById('slot-c');
+  if (!loading) {
+    const items = ['Noise-cancelling Headphones · $249','Mechanical Keyboard Pro · $159','Wireless Mouse Ultra · $79'];
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:9px">${items.map(t=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg2);border-radius:var(--r)">
+        <div style="width:30px;height:30px;border-radius:6px;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex-shrink:0"></div>
+        <span style="font-size:12px">${t}</span>
+      </div>`).join('')}</div>`;
+  } else {
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:9px">${[1,2,3].map(()=>`
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="${sk('rounded')}" style="width:30px;height:30px;flex-shrink:0"></span>
+        <div style="flex:1;min-width:0">
+          <span class="${sk()}" style="width:80%;height:.85em;display:block;margin-bottom:5px"></span>
+          <span class="${sk()}" style="width:35%;height:.7em;display:block"></span>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+}
+
+function copyInstall(el) {
+  navigator.clipboard.writeText('npm install auto-loading-skeleton').catch(()=>{});
+  el.querySelector('.copy-hint').textContent = 'copied!';
+  setTimeout(() => el.querySelector('.copy-hint').textContent = 'click to copy', 2000);
+}
+
+function copyCode(id, btn) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).catch(()=>{});
+  btn.textContent = 'copied!';
+  setTimeout(() => btn.textContent = 'copy', 1800);
+}
+
+rerender();
+</script>
+</body>
+</html>
