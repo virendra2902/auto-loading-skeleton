@@ -239,4 +239,4 @@ const skeletonEl = renderNode(tree, { animation: 'shimmer' });
 
 ## License
 
-MIT © Your Name
+MIT © Virendra Patil
