@@ -1,6 +1,6 @@
 {
   "name": "auto-loading-skeleton",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "Automatically generate loading skeleton UIs from your existing React components — no manual skeleton screens needed.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
@@ -15,9 +15,10 @@
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "test": "echo \"Run tests with your preferred test runner\""
-  },
+ "scripts": {
+  "build": "echo Build complete - no compilation needed",
+  "test": "echo \"Run tests with your preferred test runner\""
+},
   "keywords": [
     "react",
     "skeleton",
