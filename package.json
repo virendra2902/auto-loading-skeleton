@@ -1,6 +1,6 @@
 {
   "name": "auto-loading-skeleton",
-  "version": "2.0.0",
+  "version": "4.0.0",
   "description": "Automatically generate loading skeleton UIs from your existing React components — no manual skeleton screens needed.",
   "main": "src/index.js",
   "types": "src/index.d.ts",

@@ -1,47 +1,34 @@
 'use strict';
+/* cache.js — V4 */
+const MAX = 128; // doubled from V3
+const _map = new Map();
+let _hits = 0, _misses = 0;
 
-/**
- * cache.js — V2
- *
- * LRU-style descriptor cache so repeated renders of the same component
- * tree skip the recursive analyzeElement walk.
- *
- * Key: shallow fingerprint of the React element (type + prop keys + child count)
- * Value: the analyzed descriptor
- * Capacity: 32 entries (configurable)
- */
-
-var MAX = 32;
-var _cache = new Map();
-
-function fingerprint(element) {
-  if (!element || typeof element !== 'object') return String(element);
-  var t = typeof element.type === 'string' ? element.type : (element.type && element.type.displayName) || '?';
-  var p = element.props ? Object.keys(element.props).sort().join(',') : '';
-  var c = element.props && element.props.children;
-  var cl = Array.isArray(c) ? c.length : (c ? 1 : 0);
-  return t + '|' + p + '|' + cl;
+function _key(el) {
+  if (!el || typeof el !== 'object') return String(el);
+  const t = typeof el.type === 'string' ? el.type : (el.type&&(el.type.displayName||el.type.name))||'?';
+  const p = el.props ? Object.keys(el.props).sort().join(',') : '';
+  const c = el.props && el.props.children;
+  const cl = Array.isArray(c) ? c.length : (c?1:0);
+  const klass = (el.props&&el.props.className) ? el.props.className.slice(0,28) : '';
+  return `${t}|${klass}|${p}|${cl}`;
 }
 
-function get(element) {
-  var key = fingerprint(element);
-  if (!_cache.has(key)) return null;
-  // LRU: move to end
-  var val = _cache.get(key);
-  _cache.delete(key);
-  _cache.set(key, val);
-  return val;
+function get(el) {
+  const k = _key(el);
+  if (!_map.has(k)) { _misses++; return null; }
+  const v = _map.get(k); _map.delete(k); _map.set(k, v); _hits++;
+  return v.descriptor;
 }
 
-function set(element, descriptor) {
-  var key = fingerprint(element);
-  if (_cache.size >= MAX) {
-    // evict oldest entry
-    _cache.delete(_cache.keys().next().value);
-  }
-  _cache.set(key, descriptor);
+function set(el, descriptor) {
+  const k = _key(el);
+  if (_map.size >= MAX) _map.delete(_map.keys().next().value);
+  _map.set(k, { descriptor, ts: Date.now() });
 }
 
-function clear() { _cache.clear(); }
+function clear()    { _map.clear(); }
+function invalidate(el) { _map.delete(_key(el)); }
+function stats()    { return { size: _map.size, hits: _hits, misses: _misses, hitRate: (_hits+_misses)?_hits/(_hits+_misses):0 }; }
 
-module.exports = { get, set, clear, fingerprint };
+module.exports = { get, set, clear, invalidate, stats };

@@ -1,117 +1,173 @@
 'use strict';
-
 /**
- * AutoSkeleton.js — V2
+ * AutoSkeleton.js — V4
  *
- * Improvements over V1:
- *  - Reads defaults from SkeletonContext (SkeletonProvider)
- *  - Memoized descriptor via cache.js
- *  - fadeIn prop smoothly transitions real content in after loading
- *  - theme preset + themeOverrides merged into CSS vars
- *  - aria-live="polite" so screen readers announce content arrival
- *  - count renders siblings separated by gap (configurable)
- *  - renderSkeleton render prop for full manual override
- *  - onLoaded callback fired when loading transitions false
- *  - SSR safe (injectStyles is no-op on server)
+ * NEW over V3:
+ *  - Slot system: reads SkeletonSlot children for zero-ambiguity skeletons
+ *  - Skeleton diffing: skips re-render for unchanged descriptor trees
+ *  - DevTools integration: registers/unregisters in devtools store
+ *  - useSkeletonPreload: pre-warms cache during idle time
+ *  - Suspense mode: detects React.Suspense boundaries in children
+ *  - RTL support: mirrors layout when dir="rtl" detected
+ *  - 'morph' transition: spring-based content reveal
+ *  - instanceId is now deterministic if an id prop is passed
  */
 
-var React           = require('react');
-var analyzeElement  = require('./analyzer').analyzeElement;
-var renderNode      = require('./renderer').renderNode;
-var resetKeys       = require('./renderer').resetKeys;
-var injectStyles    = require('./styles').injectStyles;
-var buildThemeStyle = require('./styles').buildThemeStyle;
-var cache           = require('./cache');
-var ctx             = require('./context');
+const React              = require('react');
+const { analyzeElement } = require('./analyzer');
+const { renderNode, resetKeys } = require('./renderer');
+const { injectStyles, injectInstanceTheme, buildThemeStyle } = require('./styles');
+const cache              = require('./cache');
+const ctx                = require('./context');
+const { SkeletonErrorBoundary } = require('./errorBoundary');
+const plugins            = require('./plugins');
+const { SkeletonDiffCache } = require('./differ');
+const { collectSlots, slotsToDescriptors, isSlotElement } = require('./slots');
+const devtools           = require('./devtools');
+
+const _diffCaches = new WeakMap(); // per-component instance diff cache
+let _ic = 0;
 
 function AutoSkeleton(props) {
-  var loading         = props.loading;
-  var children        = props.children;
-  var className       = props.className       || '';
-  var style           = props.style           || {};
-  var count           = props.count           || 1;
-  var gap             = props.gap             || '16px';
-  var ariaLabel       = props.ariaLabel       || 'Loading…';
-  var onLoaded        = props.onLoaded;
-  var renderSkeleton  = props.renderSkeleton;  // render prop override
+  const {
+    loading, children,
+    className='', style={},
+    count=1, gap='16px',
+    ariaLabel='Loading…',
+    onLoaded, renderSkeleton,
+    id,   // optional stable instance ID
+  } = props;
 
-  // Read context
-  var context         = React.useContext(ctx.SkeletonContext);
-  var animation       = props.animation       || context.animation;
-  var theme           = props.theme           || context.theme;
-  var themeOverrides  = props.themeOverrides  || context.themeOverrides;
-  var fadeIn          = props.fadeIn          != null ? props.fadeIn : context.fadeIn;
-  var maxDepth        = props.maxDepth        != null ? props.maxDepth : context.maxDepth;
-  var detectRepeats   = props.detectRepeats   != null ? props.detectRepeats : context.detectRepeats;
+  const context = React.useContext(ctx.SkeletonContext);
+  const animation      = props.animation      ?? context.animation;
+  const theme          = props.theme          ?? context.theme;
+  const themeOverrides = props.themeOverrides ?? context.themeOverrides;
+  const fadeIn         = props.fadeIn         ?? context.fadeIn;
+  const transition     = props.transition     ?? context.transition;
+  const stagger        = props.stagger        ?? context.stagger;
+  const useEB          = props.errorBoundary  ?? context.errorBoundary;
+  const maxDepth       = props.maxDepth       ?? context.maxDepth;
+  const detectRepeats  = props.detectRepeats  ?? context.detectRepeats;
+  const repeatThreshold= props.repeatThreshold?? context.repeatThreshold;
+  const devMode        = props.devMode        ?? context.devMode;
+  const diffing        = props.diffing        ?? context.diffing;
 
-  // Inject base CSS once
-  React.useEffect(function() { injectStyles(); }, []);
+  // Stable instance ID
+  const instanceId = React.useRef(id || ('ask4-' + (++_ic))).current;
+
+  // Per-instance diff cache (tied to component lifecycle via ref)
+  const diffCacheRef = React.useRef(null);
+  if (!diffCacheRef.current) diffCacheRef.current = new SkeletonDiffCache();
+
+  // Style injection
+  React.useEffect(() => { injectStyles(); }, []);
   if (typeof document !== 'undefined') injectStyles();
 
-  // Fire onLoaded when loading transitions to false
-  var prevLoading = React.useRef(loading);
-  React.useEffect(function() {
-    if (prevLoading.current === true && loading === false && typeof onLoaded === 'function') {
-      onLoaded();
-    }
+  // Scoped theme
+  const themeVars = buildThemeStyle(theme, themeOverrides);
+  React.useEffect(() => {
+    if (Object.keys(themeVars).length > 0) injectInstanceTheme(instanceId, themeVars);
+  }, [theme, JSON.stringify(themeOverrides)]);
+
+  // onLoaded callback
+  const prevLoading = React.useRef(loading);
+  React.useEffect(() => {
+    if (prevLoading.current && !loading && typeof onLoaded === 'function') onLoaded();
     prevLoading.current = loading;
   }, [loading]);
 
-  // Build theme CSS vars
-  var themeStyle = buildThemeStyle(theme, themeOverrides);
-  var wrapStyle  = Object.assign({}, style, themeStyle);
+  // DevTools registration
+  React.useEffect(() => {
+    if (devMode) {
+      devtools.registerInstance(instanceId, { loading, animation, theme });
+      return () => devtools.unregisterInstance(instanceId);
+    }
+  }, [loading, animation, theme, devMode]);
+
+  // DevTools cache stats sync
+  React.useEffect(() => {
+    if (devMode) devtools.updateCacheStats(cache.stats());
+  });
+
+  // Transition class for content reveal
+  const tcls = (!loading && fadeIn)
+    ? { fade:'ask4-fade', slideup:'ask4-slideup', scale:'ask4-scale', morph:'ask4-morph', none:'' }[transition] || 'ask4-fade'
+    : '';
 
   if (!loading) {
-    // Render real children with optional fade-in animation
     return React.createElement('div', {
-      'data-ask':   '',
-      className:    'ask-wrap' + (className ? ' ' + className : '') + (fadeIn ? ' ask-fade-in' : ''),
-      style:        wrapStyle,
-      'aria-live':  'polite',
-      'aria-busy':  'false',
+      'data-ask4': instanceId, className: `ask4-wrap${tcls?' '+tcls:''}${className?' '+className:''}`,
+      style, 'aria-live':'polite', 'aria-busy':'false',
     }, children);
   }
 
-  // Use render prop if provided
+  // Render prop override
   if (typeof renderSkeleton === 'function') {
     return React.createElement('div', {
-      'data-ask':   '',
-      className:    'ask-wrap' + (className ? ' ' + className : ''),
-      style:        wrapStyle,
-      'aria-busy':  'true',
-      'aria-label': ariaLabel,
-    }, renderSkeleton({ animation: animation }));
+      'data-ask4':instanceId, className:`ask4-wrap${className?' '+className:''}`,
+      style, role:'status', 'aria-busy':'true', 'aria-label':ariaLabel,
+    }, renderSkeleton({ animation, stagger, instanceId }));
   }
 
-  // Analyze + render skeleton
-  var descriptor = cache.get(children);
-  if (!descriptor) {
-    descriptor = analyzeElement(children, 0, { maxDepth: maxDepth, detectRepeats: detectRepeats });
-    cache.set(children, descriptor);
+  // Check for SkeletonSlot children
+  const slots = collectSlots(children);
+  let descriptor;
+  if (slots.length > 0) {
+    // Slot mode: use explicit slot definitions
+    const slotDescs = slotsToDescriptors(slots);
+    descriptor = { nodeType:'container', tag:'div', children: slotDescs, styleHints:{}, _conf:1.0 };
+  } else {
+    // Analyzer mode
+    descriptor = cache.get(children);
+    if (!descriptor) {
+      plugins.runBeforeAnalyze && plugins.runBeforeAnalyze(children, { maxDepth, detectRepeats, repeatThreshold });
+      const pluginResult = plugins.runAnalyzerPlugins && plugins.runAnalyzerPlugins(children, 0, { maxDepth, detectRepeats, repeatThreshold });
+      descriptor = pluginResult || analyzeElement(children, 0, { maxDepth, detectRepeats, repeatThreshold });
+      cache.set(children, descriptor);
+    }
+  }
+
+  if (devMode && descriptor && descriptor._conf != null && descriptor._conf < 0.45) {
+    console.warn(`[ask4] low confidence (${descriptor._conf.toFixed(2)}) for:`, children);
   }
 
   resetKeys();
-  var skeletonEl = renderNode(descriptor, { animation: animation });
+  const opts = { animation, stagger };
 
-  // Render count copies
-  var items = [];
-  for (var i = 0; i < Math.max(1, count); i++) {
-    items.push(React.createElement('div', {
-      key:   'ask-item-' + i,
-      style: i < count - 1 ? { marginBottom: gap } : {},
-    }, skeletonEl));
+  // Diffing: check if descriptor changed since last render
+  let skeletonEl;
+  if (diffing) {
+    const cached = diffCacheRef.current.get(instanceId, descriptor);
+    if (cached) {
+      skeletonEl = cached;
+    } else {
+      const pluginEl = plugins.runRendererPlugins && plugins.runRendererPlugins(descriptor, opts);
+      skeletonEl = pluginEl || renderNode(descriptor, opts);
+      diffCacheRef.current.set(instanceId, descriptor, skeletonEl);
+    }
+  } else {
+    const pluginEl = plugins.runRendererPlugins && plugins.runRendererPlugins(descriptor, opts);
+    skeletonEl = pluginEl || renderNode(descriptor, opts);
   }
 
-  return React.createElement('div', {
-    'data-ask':   '',
-    className:    'ask-wrap' + (className ? ' ' + className : ''),
-    style:        wrapStyle,
-    'aria-busy':  'true',
-    'aria-label': ariaLabel,
-    role:         'status',
+  plugins.runAfterRender && plugins.runAfterRender(skeletonEl, descriptor, opts);
+
+  const items = [];
+  for (let i=0; i<Math.max(1,count); i++) {
+    items.push(React.createElement('div', { key:'ask4-i'+i, style:i<count-1?{marginBottom:gap}:{} }, skeletonEl));
+  }
+
+  const content = React.createElement('div', {
+    'data-ask4':instanceId, className:`ask4-wrap${className?' '+className:''}`,
+    style, role:'status', 'aria-busy':'true', 'aria-label':ariaLabel,
   }, items);
+
+  return useEB
+    ? React.createElement(SkeletonErrorBoundary, {
+        onError: devMode ? err => console.error('[ask4] boundary:', err) : undefined
+      }, content)
+    : content;
 }
 
 AutoSkeleton.displayName = 'AutoSkeleton';
-
 module.exports = AutoSkeleton;

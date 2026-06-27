@@ -3,10 +3,35 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>auto-loading-skeleton v2 — Interactive Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>auto-loading-skeleton v4 — The Definitive Skeleton Library</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    :root {
+      --bg: #f8f7f2;
+      --bg2: #efede5;
+      --bg3: #e5e2d8;
+      --ink: #1a1814;
+      --ink2: #5a5650;
+      --ink3: #9a9590;
+      --b: rgba(26, 24, 20, .08);
+      --b2: rgba(26, 24, 20, .14);
+      --accent: #d4420a;
+      --accent2: #e86030;
+      --accent-bg: #fdf0eb;
+      --teal: #0e7a6e;
+      --teal-bg: #e8f5f3;
+      --font: 'DM Sans', system-ui, sans-serif;
+      --serif: 'Syne', system-ui, sans-serif;
+      --mono: 'DM Mono', monospace;
+      --r: 6px;
+      --rl: 12px;
+      --sk-base: #dedad0;
+      --sk-shine: rgba(255, 255, 255, .75);
+      --sk-dur: 1.4s;
+    }
 
     *,
     *::before,
@@ -16,37 +41,6 @@
       padding: 0
     }
 
-    :root {
-      --bg: #0a0f1e;
-      --bg2: #111827;
-      --bg3: #1a2235;
-      --bg4: #202c42;
-      --txt: #f0f4ff;
-      --txt2: #94a3b8;
-      --txt3: #475569;
-      --border: rgba(240, 244, 255, 0.08);
-      --border2: rgba(240, 244, 255, 0.15);
-      --accent: #6366f1;
-      --accent2: #818cf8;
-      --accent3: #a5b4fc;
-      --green: #22c55e;
-      --amber: #f59e0b;
-      --red: #ef4444;
-      --teal: #14b8a6;
-      --font: 'Plus Jakarta Sans', system-ui, sans-serif;
-      --mono: 'DM Mono', monospace;
-      --r: 8px;
-      --rl: 14px;
-      --rxl: 20px;
-      /* skeleton vars */
-      --ask-base: #1e293b;
-      --ask-highlight: rgba(255, 255, 255, 0.06);
-      --ask-dur: 1.4s;
-      --ask-radius: 4px;
-      --ask-radius-lg: 8px;
-      --ask-radius-xl: 9999px;
-    }
-
     html {
       scroll-behavior: smooth
     }
@@ -54,53 +48,97 @@
     body {
       font-family: var(--font);
       background: var(--bg);
-      color: var(--txt);
-      min-height: 100vh;
-      line-height: 1.6
+      color: var(--ink);
+      line-height: 1.6;
+      overflow-x: hidden
     }
 
-    /* ── SKELETON ENGINE ── */
-    .ask-b {
+    /* ── SKELETON ── */
+    [data-sk] {
+      --sk-base: #dedad0;
+      --sk-shine: rgba(255, 255, 255, .75)
+    }
+
+    [data-theme="dark"] {
+      --sk-base: #1e2433;
+      --sk-shine: rgba(255, 255, 255, .05)
+    }
+
+    [data-theme="minimal"] {
+      --sk-base: #eeede8;
+      --sk-shine: rgba(255, 255, 255, .95);
+      --sk-dur: 2s
+    }
+
+    [data-theme="ocean"] {
+      --sk-base: #0c4a6e;
+      --sk-shine: rgba(186, 230, 253, .15)
+    }
+
+    [data-theme="neon"] {
+      --sk-base: #0f172a;
+      --sk-shine: rgba(212, 66, 10, .25);
+      --sk-dur: .9s
+    }
+
+    [data-theme="aurora"] {
+      --sk-base: #1a1a2e;
+      --sk-shine: rgba(147, 51, 234, .2);
+      --sk-dur: 1.6s
+    }
+
+    [data-theme="chalk"] {
+      --sk-base: #f8f8f5;
+      --sk-shine: rgba(255, 255, 255, .98);
+      --sk-dur: 2s
+    }
+
+    [data-theme="paper"] {
+      --sk-base: #fdf8f0;
+      --sk-shine: rgba(255, 255, 255, .9)
+    }
+
+    .sk {
       display: block;
       position: relative;
       overflow: hidden;
-      background: var(--ask-base);
-      border-radius: var(--ask-radius);
+      background: var(--sk-base);
+      border-radius: 4px;
       flex-shrink: 0
     }
 
-    .ask-b.ask-circle {
+    .sk.circle {
       border-radius: 50%
     }
 
-    .ask-b.ask-pill {
-      border-radius: var(--ask-radius-xl)
+    .sk.pill {
+      border-radius: 9999px
     }
 
-    .ask-b.ask-rounded {
-      border-radius: var(--ask-radius-lg)
+    .sk.rounded {
+      border-radius: 10px
     }
 
-    .ask-shimmer.ask-b::after {
+    .shimmer.sk::after {
       content: '';
       position: absolute;
       inset: 0;
       transform: translateX(-100%);
-      background: linear-gradient(90deg, transparent 0%, var(--ask-highlight) 50%, transparent 100%);
-      animation: ask-shimmer-kf var(--ask-dur) infinite
+      background: linear-gradient(90deg, transparent, var(--sk-shine), transparent);
+      animation: sh var(--sk-dur) infinite
     }
 
-    @keyframes ask-shimmer-kf {
+    @keyframes sh {
       to {
         transform: translateX(100%)
       }
     }
 
-    .ask-pulse.ask-b {
-      animation: ask-pulse-kf var(--ask-dur) ease-in-out infinite
+    .pulse.sk {
+      animation: pu var(--sk-dur) ease-in-out infinite
     }
 
-    @keyframes ask-pulse-kf {
+    @keyframes pu {
 
       0%,
       100% {
@@ -108,20 +146,20 @@
       }
 
       50% {
-        opacity: .3
+        opacity: .28
       }
     }
 
-    .ask-wave.ask-b::after {
+    .wave.sk::after {
       content: '';
       position: absolute;
       inset: 0;
       transform: translateX(-100%);
-      background: linear-gradient(90deg, transparent, var(--ask-highlight), transparent);
-      animation: ask-wave-kf calc(var(--ask-dur)*1.15) ease-in-out infinite
+      background: linear-gradient(90deg, transparent, var(--sk-shine), transparent);
+      animation: wv calc(var(--sk-dur)*1.12) ease-in-out infinite
     }
 
-    @keyframes ask-wave-kf {
+    @keyframes wv {
       0% {
         transform: translateX(-100%)
       }
@@ -131,39 +169,130 @@
       }
     }
 
-    .ask-glow.ask-b {
-      animation: ask-glow-kf var(--ask-dur) ease-in-out infinite
+    .glow.sk {
+      animation: gl var(--sk-dur) ease-in-out infinite
     }
 
-    @keyframes ask-glow-kf {
+    @keyframes gl {
 
       0%,
       100% {
-        box-shadow: 0 0 0 0 transparent
+        filter: brightness(1)
       }
 
       50% {
-        box-shadow: 0 0 18px 3px var(--ask-highlight)
+        filter: brightness(1.3)
       }
     }
 
-    .ask-none.ask-b {
+    .scan.sk::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--sk-shine);
+      top: 0;
+      animation: sc var(--sk-dur) linear infinite
+    }
+
+    @keyframes sc {
+      to {
+        top: 100%
+      }
+    }
+
+    .blink.sk {
+      animation: bl calc(var(--sk-dur)*.9) step-start infinite
+    }
+
+    @keyframes bl {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .45
+      }
+    }
+
+    .flow.sk::after {
+      content: '';
+      position: absolute;
+      inset: -50%;
+      background: linear-gradient(135deg, transparent 30%, var(--sk-shine) 50%, transparent 70%);
+      animation: fl calc(var(--sk-dur)*1.4) ease-in-out infinite
+    }
+
+    @keyframes fl {
+      0% {
+        transform: translate(-100%, -100%)
+      }
+
+      100% {
+        transform: translate(100%, 100%)
+      }
+    }
+
+    .none.sk {
       opacity: .45
     }
 
-    .ask-wrap {
+    .sk-wrap {
       pointer-events: none;
       user-select: none
     }
 
-    .ask-fade-in {
-      animation: ask-fadein .3s ease both
+    .stagger>*:nth-child(1) {
+      animation-delay: 0ms
     }
 
-    @keyframes ask-fadein {
+    .stagger>*:nth-child(2) {
+      animation-delay: 65ms
+    }
+
+    .stagger>*:nth-child(3) {
+      animation-delay: 130ms
+    }
+
+    .stagger>*:nth-child(4) {
+      animation-delay: 195ms
+    }
+
+    .stagger>*:nth-child(5) {
+      animation-delay: 260ms
+    }
+
+    .stagger>*:nth-child(6) {
+      animation-delay: 325ms
+    }
+
+    .fade-in {
+      animation: fi .3s ease both
+    }
+
+    @keyframes fi {
       from {
         opacity: 0;
-        transform: translateY(5px)
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .morph {
+      animation: mo .35s cubic-bezier(.34, 1.56, .64, 1) both
+    }
+
+    @keyframes mo {
+      from {
+        opacity: 0;
+        transform: scale(.96) translateY(4px)
       }
 
       to {
@@ -174,65 +303,140 @@
 
     @media(prefers-reduced-motion:reduce) {
 
-      .ask-shimmer.ask-b::after,
-      .ask-wave.ask-b::after {
+      .shimmer.sk::after,
+      .wave.sk::after,
+      .scan.sk::after,
+      .flow.sk::after {
         animation: none;
         background: none
       }
 
-      .ask-shimmer.ask-b,
-      .ask-wave.ask-b,
-      .ask-pulse.ask-b,
-      .ask-glow.ask-b {
-        animation: ask-pulse-kf calc(var(--ask-dur)*2) ease-in-out infinite
+      .shimmer.sk,
+      .wave.sk,
+      .pulse.sk,
+      .glow.sk,
+      .scan.sk,
+      .flow.sk,
+      .blink.sk {
+        animation: pu calc(var(--sk-dur)*2.5) ease-in-out infinite
       }
     }
 
     /* ── LAYOUT ── */
     .page {
-      max-width: 1000px;
+      max-width: 1060px;
       margin: 0 auto;
-      padding: 0 1rem 5rem
+      padding: 0 1.25rem 6rem
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(248, 247, 242, .93);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--b2);
+      height: 58px;
+      display: flex;
+      align-items: center;
+      padding: 0 2rem;
+      justify-content: space-between
+    }
+
+    .nav-l {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .nav-mark {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px
+    }
+
+    .nav-name {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500
+    }
+
+    .nav-r {
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .nav-link {
+      font-size: 13px;
+      color: var(--ink2);
+      text-decoration: none;
+      padding: 5px 12px;
+      border-radius: 6px;
+      transition: background .15s
+    }
+
+    .nav-link:hover {
+      background: var(--bg2)
+    }
+
+    .nav-cta {
+      font-size: 13px;
+      font-weight: 500;
+      background: var(--ink);
+      color: #fff;
+      text-decoration: none;
+      padding: 6px 15px;
+      border-radius: 6px
     }
 
     /* ── HERO ── */
     .hero {
-      padding: 3rem 1rem 2rem;
-      text-align: center;
+      padding: 130px 0 80px;
       position: relative
     }
 
     .hero::before {
       content: '';
       position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 600px 400px at 50% 0%, rgba(99, 102, 241, 0.12), transparent);
+      top: 60px;
+      left: -10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(212, 66, 10, .08), transparent 70%);
       pointer-events: none
     }
 
-    .v-badge {
+    .v-chip {
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      border-radius: 20px;
-      padding: 5px 14px;
-      font-size: 11px;
       font-family: var(--mono);
-      color: var(--accent3);
+      font-size: 11px;
+      color: var(--accent);
+      background: var(--accent-bg);
+      border: 1px solid rgba(212, 66, 10, .2);
+      border-radius: 20px;
+      padding: 5px 13px;
       margin-bottom: 1.25rem
     }
 
-    .v-badge .pulse-dot {
+    .vdot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--accent3);
-      animation: pdot 2s ease-in-out infinite
+      background: var(--accent);
+      animation: pd 2s ease-in-out infinite
     }
 
-    @keyframes pdot {
+    @keyframes pd {
 
       0%,
       100% {
@@ -240,131 +444,165 @@
       }
 
       50% {
-        opacity: .25
+        opacity: .2
       }
     }
 
     h1 {
-      font-size: clamp(28px, 5.5vw, 44px);
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      line-height: 1.1;
-      margin-bottom: .65rem
+      font-family: var(--serif);
+      font-size: clamp(32px, 6vw, 54px);
+      font-weight: 800;
+      letter-spacing: -.03em;
+      line-height: 1.08;
+      margin-bottom: .75rem
     }
 
     h1 em {
       font-style: normal;
-      background: linear-gradient(135deg, var(--accent2), var(--accent3));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text
+      color: var(--accent)
     }
 
     .hero-sub {
-      font-size: 15px;
-      color: var(--txt2);
-      max-width: 540px;
-      margin: 0 auto 1.75rem;
-      line-height: 1.65
+      font-size: 16px;
+      color: var(--ink2);
+      max-width: 560px;
+      line-height: 1.65;
+      margin-bottom: 2rem
     }
 
-    .install-cmd {
+    .hero-btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .btn-primary {
+      font-size: 14px;
+      font-weight: 500;
+      background: var(--ink);
+      color: #fff;
+      text-decoration: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font)
+    }
+
+    .btn-outline {
+      font-size: 14px;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: 1.5px solid var(--b2);
+      background: transparent;
+      cursor: pointer;
+      font-family: var(--font)
+    }
+
+    .btn-outline:hover {
+      background: var(--bg2)
+    }
+
+    .install-box {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: var(--r);
-      padding: 10px 16px;
+      background: var(--bg);
+      border: 1px solid var(--b2);
+      border-radius: 8px;
+      padding: 9px 16px;
       font-family: var(--mono);
       font-size: 13px;
-      color: var(--txt2);
-      cursor: pointer;
-      transition: border-color .2s
+      color: var(--ink2);
+      margin-top: 1rem;
+      cursor: pointer
     }
 
-    .install-cmd:hover {
-      border-color: rgba(99, 102, 241, 0.5)
+    .install-box code {
+      color: var(--ink)
     }
 
-    .install-cmd code {
-      color: var(--txt)
-    }
-
-    .install-cmd .cp {
+    .install-box .ic {
       font-size: 10px;
-      opacity: .45
+      opacity: .4
     }
 
-    /* ── WHAT'S NEW GRID ── */
-    .new-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px;
-      margin: 2rem 0
+    /* ── VS ROW ── */
+    .vs-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 1.5rem 0
     }
 
-    .new-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--rl);
-      padding: 14px;
-      transition: border-color .2s
-    }
-
-    .new-card:hover {
-      border-color: var(--border2)
-    }
-
-    .new-icon {
-      font-size: 18px;
-      margin-bottom: 8px;
-      line-height: 1
-    }
-
-    .new-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--txt);
-      margin-bottom: 4px
-    }
-
-    .new-desc {
+    .vc {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       font-size: 11px;
-      color: var(--txt2);
-      line-height: 1.55
+      font-family: var(--mono);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid
+    }
+
+    .vc.v1 {
+      background: rgba(154, 149, 144, .08);
+      border-color: rgba(154, 149, 144, .2);
+      color: var(--ink3)
+    }
+
+    .vc.v2 {
+      background: rgba(14, 122, 110, .08);
+      border-color: rgba(14, 122, 110, .2);
+      color: var(--teal)
+    }
+
+    .vc.v3 {
+      background: rgba(212, 66, 10, .08);
+      border-color: rgba(212, 66, 10, .2);
+      color: var(--accent2)
+    }
+
+    .vc.v4 {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff
     }
 
     /* ── SECTION ── */
-    .section {
-      margin: 2.5rem 0
+    .sec {
+      margin: 3rem 0
     }
 
-    .section-label {
+    .sec-lbl {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
       font-size: 10px;
       font-weight: 600;
       letter-spacing: .12em;
       text-transform: uppercase;
-      color: var(--txt3);
-      margin-bottom: .75rem
+      color: var(--ink3);
+      margin-bottom: 1rem
     }
 
-    .section-label::after {
+    .sec-lbl::after {
       content: '';
       flex: 1;
       height: 1px;
-      background: var(--border)
+      background: var(--b)
     }
 
-    /* ── TABS ── */
+    /* ── CARD ── */
     .card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
+      background: #fff;
+      border: 1px solid var(--b);
       border-radius: var(--rl);
-      overflow: hidden
+      overflow: hidden;
+      margin-bottom: 2rem
     }
 
     .tabs {
@@ -372,8 +610,8 @@
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg3)
+      border-bottom: 1px solid var(--b);
+      background: var(--bg)
     }
 
     .tabs::-webkit-scrollbar {
@@ -385,7 +623,7 @@
       font-size: 12px;
       font-weight: 500;
       font-family: var(--font);
-      color: var(--txt2);
+      color: var(--ink2);
       background: none;
       border: none;
       cursor: pointer;
@@ -396,11 +634,11 @@
     }
 
     .tab:hover {
-      color: var(--txt)
+      color: var(--ink)
     }
 
     .tab.active {
-      color: var(--accent3);
+      color: var(--accent);
       border-bottom-color: var(--accent)
     }
 
@@ -413,40 +651,28 @@
       display: block
     }
 
-    /* ── DEMO CONTROLS ── */
+    /* ── CONTROLS ── */
     .controls {
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
       gap: 10px;
-      margin-bottom: 1.25rem;
       padding: 12px 14px;
-      background: var(--bg3);
+      background: var(--bg);
       border-radius: var(--r);
-      border: 1px solid var(--border)
+      border: 1px solid var(--b);
+      margin-bottom: 1.25rem
     }
 
-    .ctl-group {
-      display: flex;
-      align-items: center;
-      gap: 8px
-    }
-
-    .ctl-label {
+    .cl {
       font-size: 11px;
-      color: var(--txt2);
+      color: var(--ink2);
       font-family: var(--mono)
     }
 
-    .ctl-label strong {
-      color: var(--txt)
+    .cl strong {
+      color: var(--ink)
     }
 
-    .spacer {
-      flex: 1
-    }
-
-    /* toggle */
     .tgl {
       position: relative;
       width: 36px;
@@ -465,20 +691,20 @@
     .tgl-s {
       position: absolute;
       inset: 0;
-      background: var(--bg4);
+      background: var(--bg3);
       border-radius: 10px;
-      transition: .2s;
-      border: 1px solid var(--border2)
+      border: 1px solid var(--b2);
+      transition: .2s
     }
 
-    .tgl-s:before {
+    .tgl-s::before {
       content: '';
       position: absolute;
       width: 14px;
       height: 14px;
       left: 2px;
       top: 2px;
-      background: var(--txt2);
+      background: var(--ink3);
       border-radius: 50%;
       transition: .2s
     }
@@ -487,67 +713,44 @@
       background: var(--accent)
     }
 
-    .tgl input:checked+.tgl-s:before {
+    .tgl input:checked+.tgl-s::before {
       transform: translateX(16px);
       background: #fff
     }
 
-    /* animation pills */
-    .anim-pills {
+    .pills {
       display: flex;
-      gap: 4px;
-      flex-wrap: wrap
+      flex-wrap: wrap;
+      gap: 4px
     }
 
-    .ap {
+    .pill {
       font-size: 10px;
       font-family: var(--mono);
       padding: 4px 10px;
       border-radius: 20px;
-      border: 1px solid var(--border2);
-      background: var(--bg3);
-      color: var(--txt2);
+      border: 1px solid var(--b2);
+      background: var(--bg);
+      color: var(--ink2);
       cursor: pointer;
       transition: all .15s
     }
 
-    .ap.active,
-    .ap:hover {
+    .pill.active {
       background: var(--accent);
       color: #fff;
       border-color: var(--accent)
     }
 
-    /* theme pills */
-    .theme-pills {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap
-    }
-
-    .tp {
-      font-size: 10px;
-      font-family: var(--mono);
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid var(--border2);
-      background: var(--bg3);
-      color: var(--txt2);
-      cursor: pointer;
-      transition: all .15s
-    }
-
-    .tp.active,
-    .tp:hover {
+    .pill.tl.active {
       background: var(--teal);
-      color: #fff;
       border-color: var(--teal)
     }
 
     /* ── DEMO GRID ── */
     .demo-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr 1fr;
       gap: 12px
     }
 
@@ -558,29 +761,29 @@
     }
 
     .demo-box {
-      background: var(--bg3);
-      border: 1px solid var(--border);
+      background: var(--bg);
+      border: 1px solid var(--b);
       border-radius: var(--rl);
       overflow: hidden
     }
 
-    .demo-box-header {
+    .demo-box-hdr {
       display: flex;
       align-items: center;
       gap: 7px;
-      padding: 9px 12px;
-      border-bottom: 1px solid var(--border);
-      font-size: 11px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--b);
+      font-size: 10px;
       font-family: var(--mono);
-      color: var(--txt2)
+      color: var(--ink2)
     }
 
-    .status-dot {
-      width: 6px;
-      height: 6px;
+    .sdot {
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
-      transition: background .3s;
-      flex-shrink: 0
+      flex-shrink: 0;
+      transition: background .3s
     }
 
     .demo-box-body {
@@ -588,41 +791,41 @@
     }
 
     /* ── REAL COMPONENTS ── */
-    /* ProductCard */
     .pc-img {
       width: 100%;
-      height: 110px;
+      height: 100px;
       border-radius: 8px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+      background: linear-gradient(135deg, #d4420a, #e86030);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
-      margin-bottom: 10px
+      font-size: 26px;
+      margin-bottom: 9px
     }
 
     .pc-badge {
       display: inline-flex;
-      background: rgba(99, 102, 241, 0.2);
-      color: var(--accent3);
+      background: var(--accent-bg);
+      color: var(--accent);
       font-size: 10px;
-      padding: 2px 9px;
+      padding: 2px 8px;
       border-radius: 20px;
       font-weight: 600;
-      margin-bottom: 7px
+      margin-bottom: 6px
     }
 
     .pc-title {
+      font-family: var(--serif);
       font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 4px
+      font-weight: 700;
+      margin-bottom: 3px
     }
 
     .pc-sub {
       font-size: 11px;
-      color: var(--txt2);
-      line-height: 1.55;
-      margin-bottom: 10px
+      color: var(--ink2);
+      line-height: 1.5;
+      margin-bottom: 9px
     }
 
     .pc-row {
@@ -638,28 +841,25 @@
 
     .pc-btn {
       font-size: 11px;
-      background: var(--accent);
+      background: var(--ink);
       color: #fff;
       border: none;
       padding: 7px 14px;
       border-radius: 7px;
-      cursor: pointer;
-      font-family: var(--font);
-      font-weight: 500
+      cursor: pointer
     }
 
-    /* ProfileCard */
     .prf-row {
       display: flex;
-      gap: 11px;
+      gap: 10px;
       align-items: flex-start
     }
 
     .prf-av {
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      background: linear-gradient(135deg, #0e7a6e, #1a9e8f);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -670,241 +870,131 @@
     }
 
     .prf-name {
+      font-family: var(--serif);
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       margin-bottom: 2px
     }
 
     .prf-role {
       font-size: 11px;
-      color: var(--txt2);
+      color: var(--ink2);
       margin-bottom: 7px
     }
 
     .prf-bio {
       font-size: 11px;
-      color: var(--txt2);
-      line-height: 1.55;
-      margin-bottom: 9px
+      color: var(--ink2);
+      line-height: 1.5;
+      margin-bottom: 8px
     }
 
     .prf-tags {
       display: flex;
-      gap: 5px;
+      gap: 4px;
       flex-wrap: wrap
     }
 
     .tag {
-      background: var(--bg4);
-      border: 1px solid var(--border);
-      color: var(--txt2);
+      background: var(--bg2);
+      border: 1px solid var(--b);
+      color: var(--ink2);
       font-size: 10px;
-      padding: 2px 7px;
+      padding: 2px 6px;
       border-radius: 20px
     }
 
-    /* ArticleCard */
-    .art-meta {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      margin-bottom: 8px
-    }
-
-    .art-av {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #10b981, #059669);
-      flex-shrink: 0
-    }
-
-    .art-title {
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1.4;
-      margin-bottom: 7px
-    }
-
-    .art-body {
-      font-size: 11px;
-      color: var(--txt2);
-      line-height: 1.6;
-      margin-bottom: 8px
-    }
-
-    .art-img {
-      width: 100%;
-      height: 70px;
-      border-radius: 7px;
-      background: linear-gradient(135deg, #f59e0b, #ef4444);
-      margin-bottom: 8px
-    }
-
-    .art-footer {
-      display: flex;
-      gap: 10px;
-      font-size: 10px;
-      color: var(--txt2)
-    }
-
-    /* FormCard */
-    .form-field {
-      margin-bottom: 12px
-    }
-
-    .form-label {
-      font-size: 11px;
-      color: var(--txt2);
-      margin-bottom: 5px;
-      display: block
-    }
-
-    .form-input {
-      width: 100%;
-      background: var(--bg4);
-      border: 1px solid var(--border2);
-      border-radius: 6px;
-      padding: 8px 10px;
-      font-size: 12px;
-      color: var(--txt);
-      font-family: var(--font)
-    }
-
-    .form-btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 7px;
-      font-size: 12px;
-      cursor: pointer;
-      font-family: var(--font);
-      font-weight: 500
-    }
-
-    /* ── THEME VARIATIONS ── */
-    [data-theme="minimal"] {
-      --ask-base: #e8ecf0;
-      --ask-highlight: rgba(255, 255, 255, 0.9);
-      --ask-dur: 1.8s
-    }
-
-    [data-theme="soft"] {
-      --ask-base: #ede9fe;
-      --ask-highlight: rgba(255, 255, 255, 0.7);
-      --ask-radius: 8px
-    }
-
-    [data-theme="brand"] {
-      --ask-base: #dbeafe;
-      --ask-highlight: rgba(255, 255, 255, 0.75);
-      --ask-radius: 6px;
-      --ask-dur: 1.2s
-    }
-
-    [data-theme="warm"] {
-      --ask-base: #fef3c7;
-      --ask-highlight: rgba(255, 255, 255, 0.7);
-      --ask-radius: 6px
-    }
-
-    [data-theme="dark"] {
-      --ask-base: #1a202c;
-      --ask-highlight: rgba(255, 255, 255, 0.04)
-    }
-
-    /* ── COMPARE TABLE ── */
-    .compare-grid {
+    .stat-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin: 1rem 0
+      gap: 10px
     }
 
-    @media(max-width:500px) {
-      .compare-grid {
-        grid-template-columns: 1fr
-      }
+    .stat-card {
+      background: var(--bg2);
+      border-radius: 8px;
+      padding: 12px
     }
 
-    .compare-col {
-      border: 1px solid var(--border);
+    .stat-num {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px
+    }
+
+    .stat-lbl {
+      font-size: 11px;
+      color: var(--ink2)
+    }
+
+    /* ── NEW PRIMITIVES GRID ── */
+    .prim-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px
+    }
+
+    .prim-box {
+      background: var(--bg);
+      border: 1px solid var(--b);
       border-radius: var(--rl);
       overflow: hidden
     }
 
-    .compare-head {
-      padding: 9px 13px;
-      font-size: 12px;
-      font-weight: 600;
-      border-bottom: 1px solid var(--border);
+    .prim-lbl {
+      padding: 8px 11px;
+      border-bottom: 1px solid var(--b);
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--ink2);
       display: flex;
       align-items: center;
-      gap: 7px
+      justify-content: space-between
     }
 
-    .compare-head.bad {
-      background: rgba(239, 68, 68, 0.1);
-      color: #fca5a5
+    .new-tag {
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 600
     }
 
-    .compare-head.good {
-      background: rgba(34, 197, 94, 0.1);
-      color: #86efac
-    }
-
-    .compare-body {
+    .prim-body {
       padding: 12px
     }
 
-    .ci {
-      display: flex;
-      align-items: flex-start;
-      gap: 7px;
-      font-size: 11px;
-      color: var(--txt2);
-      padding: 4px 0;
-      border-bottom: 1px solid var(--border)
-    }
-
-    .ci:last-child {
-      border-bottom: none
-    }
-
-    /* ── CODE BLOCKS ── */
+    /* ── CODE ── */
     .code-block {
-      background: var(--bg3);
-      border: 1px solid var(--border);
+      background: var(--bg2);
+      border: 1px solid var(--b);
       border-radius: var(--rl);
       overflow: hidden;
       margin-bottom: 1.25rem
     }
 
-    .cb-header {
+    .cb-hdr {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 9px 14px;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--b);
       font-size: 11px;
       font-family: var(--mono);
-      color: var(--txt2)
+      color: var(--ink2)
     }
 
-    .copy-btn {
+    .cpbtn {
       font-size: 10px;
-      background: var(--bg4);
-      border: 1px solid var(--border);
+      background: var(--bg);
+      border: 1px solid var(--b);
       border-radius: 4px;
       padding: 3px 8px;
       cursor: pointer;
-      color: var(--txt2);
+      color: var(--ink2);
       font-family: var(--mono)
-    }
-
-    .copy-btn:hover {
-      color: var(--txt)
     }
 
     pre {
@@ -913,218 +1003,147 @@
       font-family: var(--mono);
       font-size: 12px;
       line-height: 1.65;
-      color: var(--txt)
+      color: var(--ink)
     }
 
     .k {
-      color: #a78bfa
+      color: #7c3aed
     }
 
     .s {
-      color: #34d399
+      color: #0e7a6e
     }
 
     .c {
-      color: var(--txt3)
+      color: var(--ink3)
     }
 
     .t {
-      color: #fbbf24
+      color: #d4420a
     }
 
     .a {
-      color: #60a5fa
+      color: #1d4ed8
     }
 
     .p {
-      color: var(--txt)
+      color: var(--ink)
     }
 
-    .n {
-      color: #fb923c
-    }
-
-    /* ── API TABLE ── */
-    .api-tbl {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px
-    }
-
-    .api-tbl th {
-      text-align: left;
-      padding: 8px 12px;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--txt2);
-      border-bottom: 1px solid var(--border);
-      background: var(--bg3)
-    }
-
-    .api-tbl td {
-      padding: 9px 12px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: top
-    }
-
-    .api-tbl tr:last-child td {
-      border-bottom: none
-    }
-
-    .prop-n {
-      font-family: var(--mono);
-      color: var(--accent3)
-    }
-
-    .prop-t {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--txt2)
-    }
-
-    .req-badge {
-      display: inline-block;
-      background: rgba(239, 68, 68, 0.2);
-      color: #fca5a5;
-      font-size: 9px;
-      padding: 1px 5px;
-      border-radius: 3px;
-      margin-left: 4px;
-      font-weight: 600;
-      vertical-align: middle
-    }
-
-    .new-badge {
-      display: inline-block;
-      background: rgba(34, 197, 94, 0.15);
-      color: #86efac;
-      font-size: 9px;
-      padding: 1px 5px;
-      border-radius: 3px;
-      margin-left: 4px;
-      font-weight: 600;
-      vertical-align: middle
-    }
-
-    /* ── HOW IT WORKS ── */
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin: 1rem 0
-    }
-
-    @media(max-width:560px) {
-      .steps {
-        grid-template-columns: 1fr 1fr
-      }
-    }
-
-    .step {
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: var(--rl);
-      padding: 14px;
-      text-align: center
-    }
-
-    .step.hi {
-      background: rgba(99, 102, 241, 0.1);
-      border-color: rgba(99, 102, 241, 0.3)
-    }
-
-    .step-n {
-      font-size: 9px;
-      font-family: var(--mono);
-      color: var(--txt3);
-      margin-bottom: 7px
-    }
-
-    .step-ico {
-      font-size: 20px;
-      margin-bottom: 8px;
-      line-height: 1
-    }
-
-    .step-t {
-      font-size: 12px;
-      font-weight: 600;
-      margin-bottom: 4px
-    }
-
-    .step-d {
-      font-size: 10px;
-      color: var(--txt2);
-      line-height: 1.5
-    }
-
-    /* Node map */
-    .nmap {
+    /* ── COMPARISON TABLE ── */
+    .cmp {
       width: 100%;
       border-collapse: collapse;
       font-size: 11px;
+      border: 1px solid var(--b);
+      border-radius: var(--rl);
+      overflow: hidden;
       margin: 1rem 0
     }
 
-    .nmap th {
+    .cmp th {
       text-align: left;
-      padding: 7px 11px;
+      padding: 9px 12px;
       font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: .07em;
-      color: var(--txt2);
-      border-bottom: 1px solid var(--border);
-      background: var(--bg3)
+      color: var(--ink2);
+      border-bottom: 1px solid var(--b);
+      background: var(--bg2)
     }
 
-    .nmap td {
-      padding: 8px 11px;
-      border-bottom: 1px solid var(--border)
+    .cmp th.v4h {
+      background: var(--ink);
+      color: #fff
     }
 
-    .nmap tr:last-child td {
+    .cmp td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--b)
+    }
+
+    .cmp tr:last-child td {
       border-bottom: none
     }
 
-    .sk-demo-pill {
-      display: inline-block;
-      background: var(--ask-base);
-      border-radius: 9999px;
-      height: 14px;
-      vertical-align: middle
+    .yes {
+      color: var(--teal)
     }
 
-    .sk-demo-rect {
-      display: inline-block;
-      background: var(--ask-base);
-      border-radius: 4px;
-      height: 20px;
-      vertical-align: middle
+    .no {
+      color: var(--ink3)
     }
 
-    .sk-demo-circle {
-      display: inline-block;
-      background: var(--ask-base);
-      border-radius: 50%;
-      width: 22px;
-      height: 22px;
-      vertical-align: middle
+    .val {
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 10px
     }
 
-    /* ── HOOKS SECTION ── */
+    .v4c {
+      background: rgba(212, 66, 10, .04)
+    }
+
+    /* ── FEAT GRID ── */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+      gap: 10px
+    }
+
+    .feat-card {
+      background: var(--bg);
+      border: 1px solid var(--b);
+      border-radius: var(--rl);
+      padding: 14px;
+      transition: border-color .2s
+    }
+
+    .feat-card:hover {
+      border-color: var(--b2)
+    }
+
+    .feat-ico {
+      font-size: 18px;
+      margin-bottom: 8px;
+      line-height: 1
+    }
+
+    .feat-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .feat-desc {
+      font-size: 11px;
+      color: var(--ink2);
+      line-height: 1.55
+    }
+
+    .nbadge {
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 600
+    }
+
+    /* ── HOOK GRID ── */
     .hook-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px;
-      margin: 1rem 0
+      gap: 10px
     }
 
     .hook-card {
-      background: var(--bg3);
-      border: 1px solid var(--border);
+      background: var(--bg);
+      border: 1px solid var(--b);
       border-radius: var(--rl);
       padding: 14px
     }
@@ -1132,862 +1151,524 @@
     .hook-name {
       font-family: var(--mono);
       font-size: 12px;
-      color: var(--accent3);
-      margin-bottom: 5px
+      color: var(--accent);
+      margin-bottom: 3px
     }
 
     .hook-sig {
       font-family: var(--mono);
       font-size: 10px;
-      color: var(--txt3);
-      margin-bottom: 8px
+      color: var(--ink3);
+      margin-bottom: 8px;
+      line-height: 1.4
     }
 
     .hook-desc {
       font-size: 11px;
-      color: var(--txt2);
+      color: var(--ink2);
       line-height: 1.5
-    }
-
-    .hook-new {
-      display: inline-block;
-      background: rgba(34, 197, 94, 0.15);
-      color: #86efac;
-      font-size: 9px;
-      padding: 1px 6px;
-      border-radius: 3px;
-      margin-left: 6px;
-      font-weight: 600
     }
 
     footer {
       text-align: center;
       font-size: 11px;
-      color: var(--txt3);
+      color: var(--ink3);
       padding: 2rem 0;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--b);
       margin-top: 3rem
     }
 
     footer a {
-      color: var(--accent3);
+      color: var(--accent);
       text-decoration: none
     }
   </style>
 </head>
 
 <body>
+
+  <nav>
+    <div class="nav-l">
+      <div class="nav-mark">🦴</div>
+      <span class="nav-name">auto-loading-skeleton</span>
+    </div>
+    <div class="nav-r">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#demo" class="nav-link">Demo</a>
+      <a href="#hooks" class="nav-link">Hooks</a>
+      <a href="https://npmjs.com/package/auto-loading-skeleton" class="nav-cta">npm</a>
+    </div>
+  </nav>
+
   <div class="page">
 
     <!-- HERO -->
     <div class="hero">
-      <div class="v-badge"><span class="pulse-dot"></span> auto-loading-skeleton · v2.0.0</div>
-      <h1>Smarter <em>Skeleton</em> UI<br>For Every Component</h1>
-      <p class="hero-sub">V2 adds smart caching, global theming via SkeletonProvider, 4 new hooks, 8 new primitive
-        components, ARIA live regions, fade-in transitions, repeat-pattern detection, and SSR support.</p>
-      <div class="install-cmd" onclick="copyInstall(this)">
-        <code>npm install auto-loading-skeleton-v2</code>
-        <span class="cp">click to copy</span>
+      <div class="v-chip"><span class="vdot"></span> auto-loading-skeleton · v 4.0.0</div>
+      <h1>The Definitive<br>React <em>Skeleton</em> Library</h1>
+      <p class="hero-sub">V4 introduces AI layout prediction, skeleton tree diffing, the Slot system, visual DevTools,
+        React 18 streaming hooks, and 10 new primitives — all with zero runtime dependencies.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="copyInstall()">npm install auto-loading-skeleton</button>
+        <a href="#demo" class="btn-outline">Live demo</a>
+      </div>
+      <div class="vs-row">
+        <span class="vc v1">V1 · 7 files · 7 types · 1 hook</span>
+        <span class="vc v2">V2 · 9 files · 12 types · 4 hooks</span>
+        <span class="vc v4">V4 · 16 files · 25 types · 12 hooks</span>
       </div>
     </div>
 
     <!-- WHAT'S NEW -->
-    <div class="section">
-      <div class="section-label">What's new in V2</div>
-      <div class="new-grid">
-        <div class="new-card">
-          <div class="new-icon">🧠</div>
-          <div class="new-title">Smart LRU Cache</div>
-          <div class="new-desc">Analyzed descriptors are memoized. Re-renders skip tree traversal for identical
-            component shapes.</div>
+    <div class="sec" id="features">
+      <div class="sec-lbl">What's new in V4</div>
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-ico">🤖</div>
+          <div class="feat-title">AI Layout Prediction<span class="nbadge">new</span></div>
+          <div class="feat-desc">When confidence &lt; 0.5, uses sibling context to predict node type. Avatars next to
+            text → name heading.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">🌍</div>
-          <div class="new-title">SkeletonProvider</div>
-          <div class="new-desc">Set global animation, theme, and options once. Every AutoSkeleton in the tree inherits
-            them.</div>
+        <div class="feat-card">
+          <div class="feat-ico">🔀</div>
+          <div class="feat-title">Skeleton Tree Diffing<span class="nbadge">new</span></div>
+          <div class="feat-desc">Compares descriptor hash to previous render. Unchanged subtrees skip renderNode
+            entirely — near-zero re-render cost.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">🎨</div>
-          <div class="new-title">6 Theme Presets</div>
-          <div class="new-desc">default, dark, minimal, soft, brand, warm — plus fully custom CSS variable overrides.
-          </div>
+        <div class="feat-card">
+          <div class="feat-ico">🎰</div>
+          <div class="feat-title">Slot System<span class="nbadge">new</span></div>
+          <div class="feat-desc">&lt;SkeletonSlot type="avatar:56"&gt; marks explicit regions. Zero ambiguity,
+            confidence=1.0, no analyzer pass needed.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">✨</div>
-          <div class="new-title">4 Animations</div>
-          <div class="new-desc">shimmer, pulse, wave, glow — all respect prefers-reduced-motion automatically.</div>
+        <div class="feat-card">
+          <div class="feat-ico">🛠️</div>
+          <div class="feat-title">Visual DevTools<span class="nbadge">new</span></div>
+          <div class="feat-desc">Floating panel shows descriptor tree, confidence scores, cache hit rate, and active
+            instances during development.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">🔁</div>
-          <div class="new-title">Repeat Detection</div>
-          <div class="new-desc">Automatically detects list patterns and renders N skeletons for matched children without
-            count prop.</div>
+        <div class="feat-card">
+          <div class="feat-ico">🌊</div>
+          <div class="feat-title">Streaming Hook<span class="nbadge">new</span></div>
+          <div class="feat-desc">useSkeletonStream supports React 18 streaming responses and async iterables — chunks
+            grow as data arrives.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">♿</div>
-          <div class="new-title">Full Accessibility</div>
-          <div class="new-desc">aria-live polite, aria-busy, role=status, aria-hidden on all blocks — screen reader
-            ready.</div>
+        <div class="feat-card">
+          <div class="feat-ico">📄</div>
+          <div class="feat-title">Pagination Hook<span class="nbadge">new</span></div>
+          <div class="feat-desc">useSkeletonPagination: tracks paginated loading state — initial vs page-loading
+            separately.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">⚡</div>
-          <div class="new-title">4 Power Hooks</div>
-          <div class="new-desc">useSkeletonDelay, useSkeletonTimeout, useSkeletonData, useSkeleton — all new.</div>
+        <div class="feat-card">
+          <div class="feat-ico">📋</div>
+          <div class="feat-title">Form Hook<span class="nbadge">new</span></div>
+          <div class="feat-desc">useSkeletonForm tracks per-field loading state for complex forms with multiple async
+            data sources.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">🧩</div>
-          <div class="new-title">10 Primitives</div>
-          <div class="new-desc">SkeletonCard, SkeletonForm, SkeletonList, SkeletonBadge + 6 more building blocks.</div>
+        <div class="feat-card">
+          <div class="feat-ico">⚡</div>
+          <div class="feat-title">Preload Hook<span class="nbadge">new</span></div>
+          <div class="feat-desc">useSkeletonPreload pre-warms descriptor cache via requestIdleCallback — first loading
+            state is instant.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">🖥️</div>
-          <div class="new-title">SSR Safe</div>
-          <div class="new-desc">All style injection guards typeof document. Works in Next.js, Remix, Gatsby without
-            config.</div>
+        <div class="feat-card">
+          <div class="feat-ico">🏗️</div>
+          <div class="feat-title">25 Node Types<span class="nbadge">new</span></div>
+          <div class="feat-desc">SWITCH, SLIDER, CALENDAR, STEPPER, BREADCRUMB, PAGINATION, MAP, CHIP_INPUT, DRAWER,
+            FORM_FIELD added.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">🎭</div>
-          <div class="new-title">Fade-In Transition</div>
-          <div class="new-desc">Real content smoothly fades in after skeleton. Configurable per-component or globally.
-          </div>
+        <div class="feat-card">
+          <div class="feat-ico">🎨</div>
+          <div class="feat-title">7 New Animations</div>
+          <div class="feat-desc">shimmer, pulse, wave, glow, scan, blink, flow — 7 total. All prefers-reduced-motion +
+            forced-colors aware.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">🪝</div>
-          <div class="new-title">renderSkeleton Prop</div>
-          <div class="new-desc">Full render prop override for custom manual skeletons without losing theme + ARIA
-            benefits.</div>
+        <div class="feat-card">
+          <div class="feat-ico">🌗</div>
+          <div class="feat-title">12 Theme Presets</div>
+          <div class="feat-desc">aurora, midnight, chalk, paper added. All use CSS @layer for clean specificity.
+            Per-instance scoped vars.</div>
         </div>
-        <div class="new-card">
-          <div class="new-icon">📦</div>
-          <div class="new-title">Zero Dependencies</div>
-          <div class="new-desc">Still 0 runtime deps beyond React peer dep. Package stays tiny and tree-shakeable.</div>
+        <div class="feat-card">
+          <div class="feat-ico">🧩</div>
+          <div class="feat-title">30 Primitives</div>
+          <div class="feat-desc">SkeletonKanban, SkeletonChatBubble, SkeletonSwitch, SkeletonCalendar + 6 more brand-new
+            components.</div>
         </div>
       </div>
     </div>
 
-    <!-- MAIN DEMO -->
-    <div class="section">
-      <div class="section-label">Interactive demo</div>
+    <!-- DEMO -->
+    <div class="sec" id="demo">
+      <div class="sec-lbl">Interactive demo</div>
       <div class="card">
         <div class="tabs">
-          <button class="tab active" onclick="switchTab('demo',this)">Live Demo</button>
-          <button class="tab" onclick="switchTab('primitives',this)">Primitives</button>
-          <button class="tab" onclick="switchTab('api',this)">API Reference</button>
-          <button class="tab" onclick="switchTab('code',this)">Usage</button>
-          <button class="tab" onclick="switchTab('how',this)">How It Works</button>
-          <button class="tab" onclick="switchTab('hooks',this)">Hooks</button>
+          <button class="tab active" onclick="sw('demo',this)">Live Demo</button>
+          <button class="tab" onclick="sw('new-prim',this)">New Primitives</button>
+          <button class="tab" onclick="sw('compare',this)">V1→V4 Comparison</button>
+          <button class="tab" onclick="sw('code',this)">Usage</button>
+          <button class="tab" onclick="sw('hooks',this)" id="hooks-tab">Hooks</button>
         </div>
 
         <!-- DEMO PANEL -->
         <div class="panel active" id="tab-demo">
           <div class="controls">
-            <div class="ctl-group">
-              <label class="tgl"><input type="checkbox" id="load-tog" checked onchange="rerender()"><span
+            <div style="display:flex;align-items:center;gap:8px">
+              <label class="tgl"><input type="checkbox" id="ltog" checked onchange="rerender()"><span
                   class="tgl-s"></span></label>
-              <span class="ctl-label">loading = <strong id="lbl">true</strong></span>
+              <span class="cl">loading = <strong id="lbl">true</strong></span>
             </div>
-            <div class="ctl-group">
-              <span class="ctl-label">animation:</span>
-              <div class="anim-pills" id="anim-pills">
-                <button class="ap active" onclick="setAnim('shimmer',this)">shimmer</button>
-                <button class="ap" onclick="setAnim('pulse',this)">pulse</button>
-                <button class="ap" onclick="setAnim('wave',this)">wave</button>
-                <button class="ap" onclick="setAnim('glow',this)">glow</button>
-                <button class="ap" onclick="setAnim('none',this)">none</button>
+            <div style="display:flex;align-items:center;gap:7px">
+              <span class="cl">animation:</span>
+              <div class="pills" id="ap">
+                <button class="pill active" onclick="setA('shimmer',this)">shimmer</button>
+                <button class="pill" onclick="setA('pulse',this)">pulse</button>
+                <button class="pill" onclick="setA('wave',this)">wave</button>
+                <button class="pill" onclick="setA('glow',this)">glow</button>
+                <button class="pill" onclick="setA('scan',this)">scan</button>
+                <button class="pill" onclick="setA('blink',this)">blink ✦</button>
+                <button class="pill" onclick="setA('flow',this)">flow ✦</button>
               </div>
             </div>
-            <div class="ctl-group">
-              <span class="ctl-label">theme:</span>
-              <div class="theme-pills" id="theme-pills">
-                <button class="tp active" onclick="setTheme('default',this)">default</button>
-                <button class="tp" onclick="setTheme('minimal',this)">minimal</button>
-                <button class="tp" onclick="setTheme('soft',this)">soft</button>
-                <button class="tp" onclick="setTheme('brand',this)">brand</button>
-                <button class="tp" onclick="setTheme('warm',this)">warm</button>
+            <div style="display:flex;align-items:center;gap:7px">
+              <span class="cl">theme:</span>
+              <div class="pills" id="tp">
+                <button class="pill tl active" onclick="setT('default',this)">default</button>
+                <button class="pill tl" onclick="setT('dark',this)">dark</button>
+                <button class="pill tl" onclick="setT('minimal',this)">minimal</button>
+                <button class="pill tl" onclick="setT('ocean',this)">ocean</button>
+                <button class="pill tl" onclick="setT('neon',this)">neon</button>
+                <button class="pill tl" onclick="setT('aurora',this)">aurora ✦</button>
+                <button class="pill tl" onclick="setT('chalk',this)">chalk ✦</button>
+                <button class="pill tl" onclick="setT('paper',this)">paper ✦</button>
               </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px">
+              <label class="tgl"><input type="checkbox" id="stog" onchange="rerender()"><span
+                  class="tgl-s"></span></label>
+              <span class="cl">stagger ✦</span>
             </div>
           </div>
-
           <div class="demo-grid">
             <div class="demo-box">
-              <div class="demo-box-header"><span class="status-dot" id="dot-p"></span>ProductCard</div>
-              <div class="demo-box-body" id="slot-p"></div>
+              <div class="demo-box-hdr"><span class="sdot" id="dp"></span>ProductCard</div>
+              <div class="demo-box-body" id="sp"></div>
             </div>
             <div class="demo-box">
-              <div class="demo-box-header"><span class="status-dot" id="dot-prf"></span>ProfileCard</div>
-              <div class="demo-box-body" id="slot-prf"></div>
+              <div class="demo-box-hdr"><span class="sdot" id="dprf"></span>ProfileCard</div>
+              <div class="demo-box-body" id="sprf"></div>
             </div>
             <div class="demo-box">
-              <div class="demo-box-header"><span class="status-dot" id="dot-a"></span>ArticleCard</div>
-              <div class="demo-box-body" id="slot-a"></div>
+              <div class="demo-box-hdr"><span class="sdot" id="dst"></span>StatCards</div>
+              <div class="demo-box-body" id="sst"></div>
             </div>
             <div class="demo-box">
-              <div class="demo-box-header"><span class="status-dot" id="dot-f"></span>FormCard</div>
-              <div class="demo-box-body" id="slot-f"></div>
+              <div class="demo-box-hdr"><span class="sdot" id="dtb"></span>DataTable</div>
+              <div class="demo-box-body" id="stb"></div>
             </div>
           </div>
-          <p style="font-size:11px;color:var(--txt3);text-align:center;margin-top:10px">Toggle loading · switch
-            animation and theme above. All 4 animations respect <code
-              style="font-family:var(--mono);font-size:10px;background:var(--bg3);padding:1px 5px;border-radius:3px">prefers-reduced-motion</code>.
-          </p>
+          <p style="font-size:11px;color:var(--ink3);text-align:center;margin-top:10px">✦ = new in V4 · blink and flow
+            are new animation styles · aurora, chalk, paper are new themes</p>
         </div>
 
-        <!-- PRIMITIVES PANEL -->
-        <div class="panel" id="tab-primitives">
-          <p style="font-size:13px;color:var(--txt2);margin-bottom:1.25rem;line-height:1.65">V2 ships 10 ready-made
-            skeleton building blocks. All inherit animation and theme from <code
-              style="font-family:var(--mono);background:var(--bg3);padding:1px 5px;border-radius:3px">SkeletonProvider</code>
-            automatically.</p>
-          <div id="prim-demo"></div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
-            <span style="font-size:11px;color:var(--txt2)">animation:</span>
-            <div class="anim-pills">
-              <button class="ap active" onclick="setPrimAnim('shimmer',this)">shimmer</button>
-              <button class="ap" onclick="setPrimAnim('pulse',this)">pulse</button>
-              <button class="ap" onclick="setPrimAnim('wave',this)">wave</button>
-              <button class="ap" onclick="setPrimAnim('glow',this)">glow</button>
-            </div>
+        <!-- NEW PRIMITIVES -->
+        <div class="panel" id="tab-new-prim">
+          <p style="font-size:12px;color:var(--ink2);margin-bottom:1rem">10 brand-new primitives in V4. These are
+            impossible to build with V1-V3.</p>
+          <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+            <button class="pill active" onclick="setPrimA('shimmer',this)">shimmer</button>
+            <button class="pill" onclick="setPrimA('pulse',this)">pulse</button>
+            <button class="pill" onclick="setPrimA('wave',this)">wave</button>
+            <button class="pill" onclick="setPrimA('blink',this)">blink</button>
+            <button class="pill" onclick="setPrimA('flow',this)">flow</button>
           </div>
+          <div class="prim-grid" id="prim-grid"></div>
         </div>
 
-        <!-- API PANEL -->
-        <div class="panel" id="tab-api">
-          <p style="font-size:12px;color:var(--txt2);margin-bottom:1rem">Bold = new in V2. All props optional except
-            <code
-              style="font-family:var(--mono);background:var(--bg3);padding:1px 4px;border-radius:3px">loading</code>.
-          </p>
-          <div
-            style="background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:1.5rem">
-            <table class="api-tbl">
+        <!-- COMPARE -->
+        <div class="panel" id="tab-compare">
+          <div style="overflow-x:auto">
+            <table class="cmp">
               <thead>
                 <tr>
-                  <th>Prop</th>
-                  <th>Type</th>
-                  <th>Default</th>
-                  <th>Description</th>
+                  <th>Feature</th>
+                  <th>V1</th>
+                  <th>V2</th>
+                  <th>V3</th>
+                  <th class="v4h">V4</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td><span class="prop-n">loading</span><span class="req-badge">required</span></td>
-                  <td><span class="prop-t">boolean</span></td>
-                  <td>—</td>
-                  <td style="font-size:11px;color:var(--txt2)">Controls skeleton. true = show skeleton, false = show
-                    children.</td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">animation</span></td>
-                  <td><span class="prop-t">'shimmer'|'pulse'|'wave'|'glow'|'none'</span></td>
-                  <td><span class="prop-t">'shimmer'</span></td>
-                  <td style="font-size:11px;color:var(--txt2)">Animation style. Inherits from SkeletonProvider if not
-                    set.</td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">theme</span><span class="new-badge">new</span></td>
-                  <td><span class="prop-t">'default'|'dark'|'minimal'|'soft'|'brand'|'warm'</span></td>
-                  <td><span class="prop-t">'default'</span></td>
-                  <td style="font-size:11px;color:var(--txt2)">Named color preset. Merges with themeOverrides.</td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">themeOverrides</span><span class="new-badge">new</span></td>
-                  <td><span class="prop-t">ThemeOverrides</span></td>
-                  <td><span class="prop-t">{}</span></td>
-                  <td style="font-size:11px;color:var(--txt2)">Fine-grained CSS var overrides: baseColor,
-                    highlightColor, duration, borderRadius.</td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">count</span></td>
-                  <td><span class="prop-t">number</span></td>
-                  <td><span class="prop-t">1</span></td>
-                  <td style="font-size:11px;color:var(--txt2)">Repeat skeleton N times (for list placeholders).</td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">gap</span><span class="new-badge">new</span></td>
-                  <td><span class="prop-t">string</span></td>
-                  <td><span class="prop-t">'16px'</span></td>
-                  <td style="font-size:11px;color:var(--txt2)">Gap between count copies.</td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">fadeIn</span><span class="new-badge">new</span></td>
-                  <td><span class="prop-t">boolean</span></td>
-                  <td><span class="prop-t">true</span></td>
-                  <td style="font-size:11px;color:var(--txt2)">Smoothly fade real children in when loading becomes
-                    false.</td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">onLoaded</span><span class="new-badge">new</span></td>
-                  <td><span class="prop-t">() =&gt; void</span></td>
-                  <td>—</td>
-                  <td style="font-size:11px;color:var(--txt2)">Callback fired once when loading transitions false.</td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">renderSkeleton</span><span class="new-badge">new</span></td>
-                  <td><span class="prop-t">(opts) =&gt; ReactNode</span></td>
-                  <td>—</td>
-                  <td style="font-size:11px;color:var(--txt2)">Full render prop override. Theme + ARIA still applied.
-                  </td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">maxDepth</span><span class="new-badge">new</span></td>
-                  <td><span class="prop-t">number</span></td>
-                  <td><span class="prop-t">8</span></td>
-                  <td style="font-size:11px;color:var(--txt2)">Max recursion depth for the analyzer.</td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">detectRepeats</span><span class="new-badge">new</span></td>
-                  <td><span class="prop-t">boolean</span></td>
-                  <td><span class="prop-t">true</span></td>
-                  <td style="font-size:11px;color:var(--txt2)">Auto-detects repeated children lists and groups them.
-                  </td>
-                </tr>
-                <tr>
-                  <td><span class="prop-n">ariaLabel</span></td>
-                  <td><span class="prop-t">string</span></td>
-                  <td><span class="prop-t">'Loading…'</span></td>
-                  <td style="font-size:11px;color:var(--txt2)">ARIA label for the skeleton region.</td>
-                </tr>
-              </tbody>
+              <tbody id="cmp-body"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- CODE PANEL -->
+        <!-- CODE -->
         <div class="panel" id="tab-code">
           <div class="code-block">
-            <div class="cb-header"><span>SkeletonProvider + AutoSkeleton</span><button class="copy-btn"
-                onclick="copyCode('c1',this)">copy</button></div>
-            <pre id="c1"><span class="k">import</span> <span class="p">{ SkeletonProvider, AutoSkeleton }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton-v2'</span><span class="p">;</span>
+            <div class="cb-hdr"><span>Slot System — zero-ambiguity skeletons</span><button class="cpbtn"
+                onclick="cp('c1',this)">copy</button></div>
+            <pre id="c1"><span class="k">import</span> <span class="p">{ AutoSkeleton, SkeletonSlot }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton-v4'</span><span class="p">;</span>
 
-<span class="c">// Wrap your app once — all AutoSkeletons inherit these defaults</span>
-<span class="k">function</span> <span class="t">App</span><span class="p">() {</span>
+<span class="c">// Mark explicit regions with SkeletonSlot — confidence = 1.0</span>
+<span class="k">function</span> <span class="t">ProductCard</span><span class="p">({ product }) {</span>
   <span class="k">return</span> <span class="p">(</span>
-    <span class="a">&lt;SkeletonProvider</span>
-      <span class="t">animation</span><span class="p">=</span><span class="s">"shimmer"</span>
-      <span class="t">theme</span><span class="p">=</span><span class="s">"soft"</span>
-      <span class="t">fadeIn</span><span class="p">={</span><span class="k">true</span><span class="p">}</span>
-    <span class="a">&gt;</span>
-      <span class="a">&lt;ProductPage</span> <span class="a">/&gt;</span>
-    <span class="a">&lt;/SkeletonProvider&gt;</span>
+    <span class="a">&lt;div&gt;</span>
+      <span class="a">&lt;SkeletonSlot</span> <span class="t">type</span><span class="p">=</span><span class="s">"image"</span>   <span class="t">height</span><span class="p">=</span><span class="s">"200px"</span>   <span class="a">/&gt;</span>
+      <span class="a">&lt;SkeletonSlot</span> <span class="t">type</span><span class="p">=</span><span class="s">"heading"</span> <span class="t">width</span><span class="p">=</span><span class="s">"70%"</span>    <span class="a">/&gt;</span>
+      <span class="a">&lt;SkeletonSlot</span> <span class="t">type</span><span class="p">=</span><span class="s">"text"</span>    <span class="t">lines</span><span class="p">={</span><span class="n">3</span><span class="p">}        <span class="a">/&gt;</span>
+      <span class="a">&lt;SkeletonSlot</span> <span class="t">type</span><span class="p">=</span><span class="s">"button"</span>  <span class="t">width</span><span class="p">=</span><span class="s">"120px"</span>  <span class="a">/&gt;</span>
+      <span class="c">{/* Real content — shown when loading=false */}</span>
+      <span class="a">&lt;img</span> <span class="t">src</span><span class="p">={product.img}</span> <span class="a">/&gt;</span>
+      <span class="a">&lt;h2&gt;</span><span class="p">{product.title}</span><span class="a">&lt;/h2&gt;</span>
+      <span class="a">&lt;p&gt;</span><span class="p">{product.desc}</span><span class="a">&lt;/p&gt;</span>
+      <span class="a">&lt;button&gt;</span>Add to cart<span class="a">&lt;/button&gt;</span>
+    <span class="a">&lt;/div&gt;</span>
   <span class="p">);</span>
 <span class="p">}</span>
 
-<span class="k">function</span> <span class="t">ProductPage</span><span class="p">() {</span>
-  <span class="k">const</span> <span class="p">{ data, loading } =</span> <span class="t">useSkeletonData</span><span class="p">(() =&gt;</span> <span class="t">fetchProduct</span><span class="p">());</span>
-
-  <span class="k">return</span> <span class="p">(</span>
-    <span class="a">&lt;AutoSkeleton</span>
-      <span class="t">loading</span><span class="p">={loading}</span>
-      <span class="t">onLoaded</span><span class="p">={() =&gt;</span> console<span class="p">.</span><span class="t">log</span><span class="p">(</span><span class="s">'ready!'</span><span class="p">)}</span>
-    <span class="a">&gt;</span>
-      <span class="a">&lt;ProductCard</span> <span class="t">product</span><span class="p">={data}</span> <span class="a">/&gt;</span>
-    <span class="a">&lt;/AutoSkeleton&gt;</span>
-  <span class="p">);</span>
-<span class="p">}</span></pre>
-          </div>
-
-          <div class="code-block">
-            <div class="cb-header"><span>useSkeletonDelay — no flash for fast responses</span><button class="copy-btn"
-                onclick="copyCode('c2',this)">copy</button></div>
-            <pre id="c2"><span class="k">import</span> <span class="p">{ useSkeletonDelay, AutoSkeleton }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton-v2'</span><span class="p">;</span>
-
-<span class="k">function</span> <span class="t">Feed</span><span class="p">() {</span>
-  <span class="k">const</span> <span class="p">[loading, setLoading] =</span> <span class="t">useState</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
-  <span class="c">// Only shows skeleton if loading lasts longer than 200ms</span>
-  <span class="k">const</span> <span class="p">showSkeleton =</span> <span class="t">useSkeletonDelay</span><span class="p">(loading,</span> <span class="n">200</span><span class="p">);</span>
-
-  <span class="k">return</span> <span class="p">(</span>
-    <span class="a">&lt;AutoSkeleton</span> <span class="t">loading</span><span class="p">={showSkeleton}</span> <span class="t">count</span><span class="p">={</span><span class="n">5</span><span class="p">}</span> <span class="t">gap</span><span class="p">=</span><span class="s">"12px"</span><span class="a">&gt;</span>
-      <span class="a">&lt;FeedItem</span> <span class="a">/&gt;</span>
-    <span class="a">&lt;/AutoSkeleton&gt;</span>
-  <span class="p">);</span>
-<span class="p">}</span></pre>
-          </div>
-
-          <div class="code-block">
-            <div class="cb-header"><span>SkeletonCard + SkeletonForm primitives</span><button class="copy-btn"
-                onclick="copyCode('c3',this)">copy</button></div>
-            <pre id="c3"><span class="k">import</span> <span class="p">{ SkeletonCard, SkeletonForm, SkeletonList }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton-v2'</span><span class="p">;</span>
-
-<span class="c">// Ready-made composite skeletons — no AutoSkeleton wrapper needed</span>
-<span class="k">function</span> <span class="t">LoadingPage</span><span class="p">() {</span>
-  <span class="k">return</span> <span class="p">(</span>
-    <span class="a">&lt;div&gt;</span>
-      <span class="a">&lt;SkeletonCard</span> <span class="t">image</span><span class="p">={</span><span class="k">true</span><span class="p">}</span> <span class="t">lines</span><span class="p">={</span><span class="n">3</span><span class="p">}</span> <span class="t">animation</span><span class="p">=</span><span class="s">"shimmer"</span> <span class="a">/&gt;</span>
-      <span class="a">&lt;SkeletonForm</span> <span class="t">fields</span><span class="p">={</span><span class="n">4</span><span class="p">}</span> <span class="a">/&gt;</span>
-      <span class="a">&lt;SkeletonList</span> <span class="t">count</span><span class="p">={</span><span class="n">6</span><span class="p">}</span> <span class="t">rowHeight</span><span class="p">=</span><span class="s">"56px"</span> <span class="a">/&gt;</span>
-    <span class="a">&lt;/div&gt;</span>
-  <span class="p">);</span>
-<span class="p">}</span></pre>
-          </div>
-
-          <div class="code-block">
-            <div class="cb-header"><span>renderSkeleton render prop</span><button class="copy-btn"
-                onclick="copyCode('c4',this)">copy</button></div>
-            <pre id="c4"><span class="a">&lt;AutoSkeleton</span>
-  <span class="t">loading</span><span class="p">={loading}</span>
-  <span class="t">theme</span><span class="p">=</span><span class="s">"brand"</span>
-  <span class="t">renderSkeleton</span><span class="p">={({ animation }) =&gt; (</span>
-    <span class="c">// Fully custom skeleton, keeps theme + ARIA</span>
-    <span class="a">&lt;div</span> <span class="t">style</span><span class="p">={{ display:</span> <span class="s">'flex'</span><span class="p">, gap:</span> <span class="s">'12px'</span> <span class="p">}}&gt;</span>
-      <span class="a">&lt;SkeletonAvatar</span> <span class="t">size</span><span class="p">=</span><span class="s">"48px"</span> <span class="t">animation</span><span class="p">={animation}</span> <span class="a">/&gt;</span>
-      <span class="a">&lt;SkeletonText</span>  <span class="t">lines</span><span class="p">={</span><span class="n">2</span><span class="p">}</span>    <span class="t">animation</span><span class="p">={animation}</span> <span class="a">/&gt;</span>
-    <span class="a">&lt;/div&gt;</span>
-  <span class="p">)}</span>
-<span class="a">&gt;</span>
-  <span class="a">&lt;UserRow</span> <span class="t">user</span><span class="p">={user}</span> <span class="a">/&gt;</span>
+<span class="a">&lt;AutoSkeleton</span> <span class="t">loading</span><span class="p">={loading}</span><span class="a">&gt;</span>
+  <span class="a">&lt;ProductCard</span> <span class="t">product</span><span class="p">={data}</span> <span class="a">/&gt;</span>
 <span class="a">&lt;/AutoSkeleton&gt;</span></pre>
           </div>
-        </div>
+          <div class="code-block">
+            <div class="cb-hdr"><span>useSkeletonStream — React 18 streaming</span><button class="cpbtn"
+                onclick="cp('c2',this)">copy</button></div>
+            <pre id="c2"><span class="k">import</span> <span class="p">{ useSkeletonStream, AutoSkeleton }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton-v4'</span><span class="p">;</span>
 
-        <!-- HOW IT WORKS PANEL -->
-        <div class="panel" id="tab-how">
-          <div class="steps">
-            <div class="step">
-              <div class="step-n">step 1</div>
-              <div class="step-ico">🌳</div>
-              <div class="step-t">Parse</div>
-              <div class="step-d">Depth-limited recursive traversal of the React element tree</div>
-            </div>
-            <div class="step hi">
-              <div class="step-n">step 2</div>
-              <div class="step-ico">🔍</div>
-              <div class="step-t">Infer types</div>
-              <div class="step-d">Tag, className, ARIA role, alt text, style hints — 12 node types total</div>
-            </div>
-            <div class="step">
-              <div class="step-n">step 3</div>
-              <div class="step-ico">💾</div>
-              <div class="step-t">Cache</div>
-              <div class="step-d">LRU descriptor cache (32 slots) skips re-analysis on re-renders</div>
-            </div>
-            <div class="step">
-              <div class="step-n">step 4</div>
-              <div class="step-ico">🎨</div>
-              <div class="step-t">Render + theme</div>
-              <div class="step-d">Descriptor → DOM nodes with CSS vars, animation class, ARIA attrs</div>
-            </div>
-          </div>
-
-          <p style="font-size:12px;color:var(--txt2);margin-bottom:1rem">V2 node type map — 12 types vs 7 in V1:</p>
-          <div
-            style="background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:1.5rem">
-            <table class="nmap">
-              <thead>
-                <tr>
-                  <th>Source element</th>
-                  <th>Skeleton shape</th>
-                  <th>Detection signals</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>String / number child</td>
-                  <td><span class="sk-demo-rect" style="width:55px"></span> gray lines (1–5)</td>
-                  <td style="color:var(--txt2)">typeof children === 'string'</td>
-                </tr>
-                <tr>
-                  <td>&lt;h1&gt;–&lt;h6&gt; / .heading</td>
-                  <td><span class="sk-demo-rect" style="width:75px;height:14px"></span> taller line</td>
-                  <td style="color:var(--txt2)">tag /^h[1-6]$/ or .heading class</td>
-                </tr>
-                <tr>
-                  <td>&lt;img&gt;</td>
-                  <td><span class="sk-demo-rect" style="width:60px;height:30px;border-radius:6px"></span> rounded rect
-                  </td>
-                  <td style="color:var(--txt2)">tag === 'img'</td>
-                </tr>
-                <tr>
-                  <td>Avatar img / .avatar</td>
-                  <td><span class="sk-demo-circle"></span> circle</td>
-                  <td style="color:var(--txt2)">className, alt text, equal w+h+border-radius</td>
-                </tr>
-                <tr>
-                  <td>&lt;video&gt; / &lt;iframe&gt; / .media</td>
-                  <td><span class="sk-demo-rect" style="width:70px;height:35px;border-radius:6px"></span> wide rect
-                    <span class="new-badge" style="font-size:8px">new</span></td>
-                  <td style="color:var(--txt2)">tag === video/audio/iframe</td>
-                </tr>
-                <tr>
-                  <td>&lt;button&gt; / role=button</td>
-                  <td><span class="sk-demo-pill" style="width:60px"></span> pill</td>
-                  <td style="color:var(--txt2)">tag or role or .btn class</td>
-                </tr>
-                <tr>
-                  <td>&lt;input&gt; (non-checkbox)</td>
-                  <td><span class="sk-demo-rect" style="width:80px;height:20px;border-radius:5px"></span> rounded</td>
-                  <td style="color:var(--txt2)">tag === 'input' + type check</td>
-                </tr>
-                <tr>
-                  <td>&lt;textarea&gt;</td>
-                  <td><span class="sk-demo-rect" style="width:80px;height:40px;border-radius:5px"></span> tall rect
-                    <span class="new-badge" style="font-size:8px">new</span></td>
-                  <td style="color:var(--txt2)">tag === 'textarea'</td>
-                </tr>
-                <tr>
-                  <td>.badge / .chip / .tag</td>
-                  <td><span class="sk-demo-pill" style="width:42px;height:14px"></span> small pill <span
-                      class="new-badge" style="font-size:8px">new</span></td>
-                  <td style="color:var(--txt2)">className pattern match</td>
-                </tr>
-                <tr>
-                  <td>&lt;svg&gt; / .icon / checkbox</td>
-                  <td><span class="sk-demo-circle" style="width:18px;height:18px"></span> small circle</td>
-                  <td style="color:var(--txt2)">tag === 'svg' or .icon class</td>
-                </tr>
-                <tr>
-                  <td>Repeated children list</td>
-                  <td>N × template <span class="new-badge" style="font-size:8px">new</span></td>
-                  <td style="color:var(--txt2)">All children same type or class prefix</td>
-                </tr>
-                <tr>
-                  <td>article / .card wrapper</td>
-                  <td>Card wrapper <span class="new-badge" style="font-size:8px">new</span></td>
-                  <td style="color:var(--txt2)">tag === article/section or .card class</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="compare-grid">
-            <div class="compare-col">
-              <div class="compare-head bad">✕ &nbsp;V1 limitations</div>
-              <div class="compare-body">
-                <div class="ci"><span>✕</span><span>7 node types, no MEDIA/BADGE/REPEAT</span></div>
-                <div class="ci"><span>✕</span><span>No caching — re-analyzes every render</span></div>
-                <div class="ci"><span>✕</span><span>No global config — props repeated everywhere</span></div>
-                <div class="ci"><span>✕</span><span>3 animations, no glow</span></div>
-                <div class="ci"><span>✕</span><span>No fade-in transition on content load</span></div>
-                <div class="ci"><span>✕</span><span>1 hook (useSkeleton)</span></div>
-                <div class="ci"><span>✕</span><span>No SSR guard on style injection</span></div>
-              </div>
-            </div>
-            <div class="compare-col">
-              <div class="compare-head good">✓ &nbsp;V2 improvements</div>
-              <div class="compare-body">
-                <div class="ci"><span>✓</span><span>12 node types — full component coverage</span></div>
-                <div class="ci"><span>✓</span><span>LRU cache (32 slots) — skips re-analysis</span></div>
-                <div class="ci"><span>✓</span><span>SkeletonProvider for global defaults</span></div>
-                <div class="ci"><span>✓</span><span>4 animations + reduced-motion aware</span></div>
-                <div class="ci"><span>✓</span><span>fadeIn prop + onLoaded callback</span></div>
-                <div class="ci"><span>✓</span><span>4 hooks (delay, timeout, data, basic)</span></div>
-                <div class="ci"><span>✓</span><span>SSR-safe, works in Next.js/Remix/Gatsby</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- HOOKS PANEL -->
-        <div class="panel" id="tab-hooks">
-          <p style="font-size:13px;color:var(--txt2);margin-bottom:1.25rem">V2 ships 4 hooks for every loading scenario.
-            All are composable and SSR-safe.</p>
-          <div class="hook-grid">
-            <div class="hook-card">
-              <div class="hook-name">useSkeleton</div>
-              <div class="hook-sig">(initial?, opts?) → {loading, setLoading, skeletonProps}</div>
-              <div class="hook-desc">Basic loading state manager. skeletonProps spreads directly onto AutoSkeleton.
-              </div>
-            </div>
-            <div class="hook-card">
-              <div class="hook-name">useSkeletonDelay<span class="hook-new">new</span></div>
-              <div class="hook-sig">(loading, delay=200) → boolean</div>
-              <div class="hook-desc">Prevents skeleton flash. Only returns true if loading has lasted longer than delay
-                ms. Perfect for fast APIs.</div>
-            </div>
-            <div class="hook-card">
-              <div class="hook-name">useSkeletonTimeout<span class="hook-new">new</span></div>
-              <div class="hook-sig">(loading, minDuration=500) → boolean</div>
-              <div class="hook-desc">Ensures skeleton stays visible for at least minDuration ms. Prevents jarring
-                instant transitions when data arrives too fast.</div>
-            </div>
-            <div class="hook-card">
-              <div class="hook-name">useSkeletonData<span class="hook-new">new</span></div>
-              <div class="hook-sig">&#60;T&#62;(fetchFn, deps?) → {data, loading, error}</div>
-              <div class="hook-desc">Async data fetcher fully integrated with loading state. Cancels in-flight requests
-                on unmount. No extra state needed.</div>
-            </div>
-          </div>
-
-          <div class="code-block" style="margin-top:1.25rem">
-            <div class="cb-header"><span>useSkeletonData — async data + loading in one hook</span><button
-                class="copy-btn" onclick="copyCode('c5',this)">copy</button></div>
-            <pre id="c5"><span class="k">import</span> <span class="p">{ useSkeletonData, AutoSkeleton }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton-v2'</span><span class="p">;</span>
-
-<span class="k">function</span> <span class="t">UserCard</span><span class="p">({ userId }) {</span>
-  <span class="k">const</span> <span class="p">{ data: user, loading, error } =</span>
-    <span class="t">useSkeletonData</span><span class="p">(() =&gt;</span>
-      <span class="t">fetch</span><span class="p">(`/api/users/${userId}`)</span>
-        <span class="p">.</span><span class="t">then</span><span class="p">(r =&gt; r.</span><span class="t">json</span><span class="p">()),</span>
-      <span class="p">[userId]</span>  <span class="c">// re-fetches when userId changes</span>
-    <span class="p">);</span>
-
-  <span class="k">if</span> <span class="p">(error)</span> <span class="k">return</span> <span class="a">&lt;ErrorState</span> <span class="t">error</span><span class="p">={error}</span> <span class="a">/&gt;</span><span class="p">;</span>
+<span class="k">function</span> <span class="t">StreamingFeed</span><span class="p">() {</span>
+  <span class="k">const</span> <span class="p">{ chunks, loading, isEmpty } =</span> <span class="t">useSkeletonStream</span><span class="p">(</span>
+    <span class="k">async function</span><span class="p">*() {</span>
+      <span class="k">const</span> <span class="p">stream =</span> <span class="k">await</span> <span class="t">fetch</span><span class="p">(</span><span class="s">'/api/feed/stream'</span><span class="p">);</span>
+      <span class="k">const</span> <span class="p">reader = stream.body.</span><span class="t">getReader</span><span class="p">();</span>
+      <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">) {</span>
+        <span class="k">const</span> <span class="p">{ done, value } =</span> <span class="k">await</span> reader.<span class="t">read</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(done)</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">yield</span> <span class="t">JSON</span><span class="p">.</span><span class="t">parse</span><span class="p">(</span><span class="t">decode</span><span class="p">(value));</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">[]</span>
+  <span class="p">);</span>
 
   <span class="k">return</span> <span class="p">(</span>
-    <span class="a">&lt;AutoSkeleton</span> <span class="t">loading</span><span class="p">={loading}</span><span class="a">&gt;</span>
-      <span class="a">&lt;ProfileCard</span> <span class="t">user</span><span class="p">={user}</span> <span class="a">/&gt;</span>
-    <span class="a">&lt;/AutoSkeleton&gt;</span>
+    <span class="a">&lt;div&gt;</span>
+      <span class="p">{chunks.</span><span class="t">map</span><span class="p">((chunk, i) =&gt; (</span>
+        <span class="a">&lt;FeedItem</span> <span class="t">key</span><span class="p">={i}</span> <span class="t">data</span><span class="p">={chunk}</span> <span class="a">/&gt;</span>
+      <span class="p">))}</span>
+      <span class="p">{loading &&</span> <span class="a">&lt;AutoSkeleton</span> <span class="t">loading</span><span class="p">={</span><span class="k">true</span><span class="p">}</span> <span class="t">count</span><span class="p">={</span><span class="n">3</span><span class="p">}</span><span class="a">&gt;</span>
+        <span class="a">&lt;FeedItem</span> <span class="a">/&gt;</span>
+      <span class="a">&lt;/AutoSkeleton&gt;</span><span class="p">}</span>
+    <span class="a">&lt;/div&gt;</span>
   <span class="p">);</span>
 <span class="p">}</span></pre>
           </div>
+          <div class="code-block">
+            <div class="cb-hdr"><span>SkeletonDevTools — visual inspector</span><button class="cpbtn"
+                onclick="cp('c3',this)">copy</button></div>
+            <pre id="c3"><span class="k">import</span> <span class="p">{ SkeletonDevTools }</span> <span class="k">from</span> <span class="s">'auto-loading-skeleton-v4'</span><span class="p">;</span>
+
+<span class="c">// Add once to app root — renders null in production automatically</span>
+<span class="k">function</span> <span class="t">App</span><span class="p">() {</span>
+  <span class="k">return</span> <span class="p">(</span>
+    <span class="a">&lt;&gt;</span>
+      <span class="a">&lt;YourApp</span> <span class="a">/&gt;</span>
+      <span class="a">&lt;SkeletonDevTools</span> <span class="a">/&gt;</span>  <span class="c">// floating panel, dev only</span>
+    <span class="a">&lt;/&gt;</span>
+  <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">// Panel shows:</span>
+<span class="c">// • Descriptor tree with confidence % per node</span>
+<span class="c">// • Cache hits / misses / hit rate</span>
+<span class="c">// • All active loading instances</span>
+<span class="c">// • Animation + theme per instance</span></pre>
+          </div>
+        </div>
+
+        <!-- HOOKS -->
+        <div class="panel" id="tab-hooks">
+          <div class="hook-grid" id="hook-grid"></div>
         </div>
       </div>
     </div>
 
     <footer>
-      auto-loading-skeleton v2.0.0 · React ≥ 16.8 · Zero runtime deps · MIT License ·
-      <a href="#">npm</a> · <a href="#">GitHub</a> · <a href="#">Docs</a>
+      auto-loading-skeleton v4.0.0 · React ≥ 18 · 16 source files · Zero runtime deps · MIT
+      · <a href="https://npmjs.com/package/auto-loading-skeleton">npm</a>
+      · <a href="https://github.com/virendra2902/auto-loading-skeleton">GitHub</a>
     </footer>
-
-  </div><!-- /page -->
+  </div>
 
   <script>
-    var currentAnim = 'shimmer';
-    var currentTheme = 'default';
-    var primAnim = 'shimmer';
+    var anim = 'shimmer', theme = 'default', stagger = false, primAnim = 'shimmer';
+    var GREEN = '#1a9e5c', AMBER = '#d4420a';
 
-    function switchTab(name, btn) {
+    function sw(name, btn) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + name).classList.add('active');
-      if (name === 'primitives') renderPrimitives();
+      if (name === 'new-prim') renderPrims();
+      if (name === 'compare') renderCompare();
+      if (name === 'hooks') renderHooks();
     }
+    function setA(a, btn) { anim = a; document.querySelectorAll('#ap .pill').forEach(p => p.classList.remove('active')); btn.classList.add('active'); rerender() }
+    function setT(t, btn) { theme = t; document.querySelectorAll('#tp .pill').forEach(p => p.classList.remove('active')); btn.classList.add('active'); rerender() }
+    function setPrimA(a, btn) { primAnim = a; document.querySelectorAll('#tab-new-prim .pill').forEach(p => p.classList.remove('active')); btn.classList.add('active'); renderPrims() }
 
-    function setAnim(a, btn) {
-      currentAnim = a;
-      document.querySelectorAll('#anim-pills .ap').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      rerender();
-    }
-
-    function setTheme(t, btn) {
-      currentTheme = t;
-      document.querySelectorAll('.theme-pills .tp').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      rerender();
-    }
-
-    function setPrimAnim(a, btn) {
-      primAnim = a;
-      document.querySelectorAll('#tab-primitives .anim-pills .ap').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      renderPrimitives();
-    }
-
-    function sk(shape) {
-      return 'ask-b ask-' + currentAnim + (shape ? ' ask-' + shape : '');
-    }
-
-    function psk(shape) {
-      return 'ask-b ask-' + primAnim + (shape ? ' ask-' + shape : '');
-    }
-
-    function applyTheme(el) {
-      el.removeAttribute('data-theme');
-      if (currentTheme !== 'default') el.setAttribute('data-theme', currentTheme);
-    }
+    function sk(shape) { return 'sk ' + anim + (shape ? ' ' + shape : '') }
+    function psk(shape) { return 'sk ' + primAnim + (shape ? ' ' + shape : '') }
 
     function rerender() {
-      var loading = document.getElementById('load-tog').checked;
+      var loading = document.getElementById('ltog').checked;
+      stagger = document.getElementById('stog').checked;
       document.getElementById('lbl').textContent = String(loading);
-      ['p', 'prf', 'a', 'f'].forEach(id => {
-        var dot = document.getElementById('dot-' + id);
-        dot.style.background = loading ? 'var(--amber)' : 'var(--green)';
-      });
-
-      // apply theme to demo boxes
-      document.querySelectorAll('.demo-box-body').forEach(b => applyTheme(b));
-
-      renderProduct(loading);
-      renderProfile(loading);
-      renderArticle(loading);
-      renderForm(loading);
+      ['dp', 'dprf', 'dst', 'dtb'].forEach(id => { document.getElementById(id).style.background = loading ? AMBER : GREEN; });
+      document.querySelectorAll('.demo-box-body').forEach(b => { b.removeAttribute('data-theme'); if (theme !== 'default') b.setAttribute('data-theme', theme); });
+      renderProduct(loading); renderProfile(loading); renderStats(loading); renderTable(loading);
     }
+
+    function wrap(html) { var sg = stagger ? ' stagger' : ''; return '<div class="sk-wrap' + sg + '">' + html + '</div>'; }
 
     function renderProduct(loading) {
-      var el = document.getElementById('slot-p');
+      var el = document.getElementById('sp');
       if (!loading) {
-        el.innerHTML = `<div class="ask-fade-in">
-      <div class="pc-img">🎧</div>
-      <div class="pc-badge">New · V2</div>
-      <div class="pc-title">Premium Wireless Headphones</div>
-      <div class="pc-sub">Noise-cancelling · 30hr battery · Spatial audio built-in.</div>
-      <div class="pc-row"><span class="pc-price">$249.00</span><button class="pc-btn">Add to cart</button></div>
-    </div>`;
+        el.innerHTML = '<div class="fade-in"><div class="pc-img">🎧</div><div class="pc-badge">V4 · New</div><div class="pc-title">Premium Wireless Headphones</div><div class="pc-sub">Noise-cancelling · 30hr battery · Spatial audio.</div><div class="pc-row"><span class="pc-price">$249</span><button class="pc-btn">Add to cart</button></div></div>';
       } else {
-        el.innerHTML = `<div class="ask-wrap">
-      <span class="${sk('rounded')}" style="width:100%;height:110px;margin-bottom:10px"></span>
-      <span class="${sk('pill')}" style="width:60px;height:18px;margin-bottom:8px"></span>
-      <span class="${sk()}" style="width:78%;height:1em;margin-bottom:5px"></span>
-      <div style="margin-bottom:10px">
-        <span class="${sk()}" style="width:100%;height:.85em;display:block;margin-bottom:5px"></span>
-        <span class="${sk()}" style="width:68%;height:.85em;display:block"></span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="${sk()}" style="width:62px;height:1.15em"></span>
-        <span class="${sk('pill')}" style="width:82px;height:30px"></span>
-      </div>
-    </div>`;
+        el.innerHTML = wrap('<span class="' + sk('rounded') + '" style="width:100%;height:100px;margin-bottom:9px"></span><span class="' + sk('pill') + '" style="width:58px;height:17px;margin-bottom:7px"></span><span class="' + sk() + '" style="width:78%;height:1em;margin-bottom:4px"></span><span class="' + sk() + '" style="width:100%;height:.82em;display:block;margin-bottom:4px"></span><span class="' + sk() + '" style="width:65%;height:.82em;display:block;margin-bottom:9px"></span><div style="display:flex;justify-content:space-between;align-items:center"><span class="' + sk() + '" style="width:55px;height:1.1em"></span><span class="' + sk('pill') + '" style="width:80px;height:28px"></span></div>');
       }
     }
-
     function renderProfile(loading) {
-      var el = document.getElementById('slot-prf');
+      var el = document.getElementById('sprf');
       if (!loading) {
-        el.innerHTML = `<div class="prf-row ask-fade-in">
-      <div class="prf-av">AK</div>
-      <div style="flex:1;min-width:0">
-        <div class="prf-name">Arjun Kumar</div>
-        <div class="prf-role">Senior Frontend Engineer</div>
-        <div class="prf-bio">Building open-source tools. Coffee addict. Ex-Flipkart, Ex-Razorpay.</div>
-        <div class="prf-tags"><span class="tag">React</span><span class="tag">TypeScript</span><span class="tag">Design</span></div>
-      </div>
-    </div>`;
+        el.innerHTML = '<div class="prf-row fade-in"><div class="prf-av">AK</div><div style="flex:1;min-width:0"><div class="prf-name">Arjun Kumar</div><div class="prf-role">Senior Frontend Engineer</div><div class="prf-bio">Building open-source tools. Ex-Flipkart.</div><div class="prf-tags"><span class="tag">React</span><span class="tag">TypeScript</span><span class="tag">Design</span></div></div></div>';
       } else {
-        el.innerHTML = `<div class="ask-wrap" style="display:flex;gap:11px;align-items:flex-start">
-      <span class="${sk('circle')}" style="width:44px;height:44px;flex-shrink:0"></span>
-      <div style="flex:1;min-width:0">
-        <span class="${sk()}" style="width:58%;height:1em;display:block;margin-bottom:6px"></span>
-        <span class="${sk()}" style="width:42%;height:.8em;display:block;margin-bottom:9px"></span>
-        <span class="${sk()}" style="width:100%;height:.75em;display:block;margin-bottom:5px"></span>
-        <span class="${sk()}" style="width:80%;height:.75em;display:block;margin-bottom:9px"></span>
-        <div style="display:flex;gap:5px">
-          <span class="${sk('pill')}" style="width:42px;height:17px"></span>
-          <span class="${sk('pill')}" style="width:62px;height:17px"></span>
-          <span class="${sk('pill')}" style="width:44px;height:17px"></span>
-        </div>
-      </div>
-    </div>`;
+        el.innerHTML = wrap('<div style="display:flex;gap:10px;align-items:flex-start"><span class="' + sk('circle') + '" style="width:42px;height:42px;flex-shrink:0"></span><div style="flex:1;min-width:0"><span class="' + sk() + '" style="width:56%;height:.95em;display:block;margin-bottom:6px"></span><span class="' + sk() + '" style="width:40%;height:.78em;display:block;margin-bottom:9px"></span><span class="' + sk() + '" style="width:100%;height:.74em;display:block;margin-bottom:5px"></span><span class="' + sk() + '" style="width:80%;height:.74em;display:block;margin-bottom:9px"></span><div style="display:flex;gap:5px"><span class="' + sk('pill') + '" style="width:40px;height:17px"></span><span class="' + sk('pill') + '" style="width:58px;height:17px"></span><span class="' + sk('pill') + '" style="width:42px;height:17px"></span></div></div></div>');
+      }
+    }
+    function renderStats(loading) {
+      var el = document.getElementById('sst');
+      if (!loading) {
+        el.innerHTML = '<div class="stat-grid fade-in">' + [['$48.2k', 'Revenue'], ['1,204', 'Users'], ['98.1%', 'Uptime'], ['4.9★', 'Rating']].map(([n, l]) => '<div class="stat-card"><div class="stat-num">' + n + '</div><div class="stat-lbl">' + l + '</div></div>').join('') + '</div>';
+      } else {
+        var sg = stagger ? ' stagger' : '';
+        el.innerHTML = '<div class="stat-grid' + sg + '">' + [1, 2, 3, 4].map(() => '<div style="background:var(--bg2);border-radius:8px;padding:12px"><span class="' + sk() + '" style="width:75px;height:1.8em;display:block;margin-bottom:7px"></span><span class="' + sk() + '" style="width:55px;height:.75em;display:block"></span></div>').join('') + '</div>';
+      }
+    }
+    function renderTable(loading) {
+      var el = document.getElementById('stb');
+      if (!loading) {
+        var rows = [['Headphones', 'Electronics', '$249', 'In stock'], ['Keyboard', 'Peripherals', '$159', 'In stock'], ['Mouse', 'Peripherals', '$79', 'Low stock']];
+        el.innerHTML = '<div class="fade-in" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr>' + ['Product', 'Category', 'Price', 'Status'].map(h => '<th style="text-align:left;padding:7px 9px;border-bottom:1px solid var(--b);color:var(--ink2);font-weight:500">' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map(c => '<td style="padding:7px 9px;border-bottom:1px solid var(--b)">' + c + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+      } else {
+        var sg2 = stagger ? ' stagger' : '';
+        var ws = [['70%', '55%', '40%', '60%'], ['85%', '45%', '50%', '70%'], ['60%', '65%', '35%', '55%']];
+        var hcells = '<tr>' + [1, 2, 3, 4].map(() => '<th style="padding:7px 9px"><span class="' + sk() + '" style="width:65%;height:.78em;display:block"></span></th>').join('') + '</tr>';
+        var rows2 = ws.map(r => '<tr>' + r.map(w => '<td style="padding:7px 9px"><span class="' + sk() + '" style="width:' + w + ';height:.78em;display:block"></span></td>').join('') + '</tr>').join('');
+        el.innerHTML = '<div style="overflow-x:auto"><table class="sk-wrap' + sg2 + '" style="width:100%;border-collapse:collapse"><thead>' + hcells + '</thead><tbody>' + rows2 + '</tbody></table></div>';
       }
     }
 
-    function renderArticle(loading) {
-      var el = document.getElementById('slot-a');
-      if (!loading) {
-        el.innerHTML = `<div class="ask-fade-in">
-      <div class="art-meta"><div class="art-av"></div><span style="font-size:11px;color:var(--txt2)">Priya Sharma</span><span style="font-size:10px;color:var(--txt3)">· 4 min</span></div>
-      <div class="art-title">Why every developer should use skeleton screens</div>
-      <div class="art-body">Skeleton screens dramatically improve perceived performance by showing structure while content loads…</div>
-      <div class="art-img"></div>
-      <div class="art-footer"><span>128 likes</span><span>24 comments</span><span>Save</span></div>
-    </div>`;
-      } else {
-        el.innerHTML = `<div class="ask-wrap">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
-        <span class="${sk('circle')}" style="width:24px;height:24px;flex-shrink:0"></span>
-        <span class="${sk()}" style="width:65px;height:.75em"></span>
-        <span class="${sk()}" style="width:35px;height:.75em"></span>
-      </div>
-      <span class="${sk()}" style="width:88%;height:.95em;display:block;margin-bottom:4px"></span>
-      <span class="${sk()}" style="width:62%;height:.95em;display:block;margin-bottom:8px"></span>
-      <span class="${sk()}" style="width:100%;height:.75em;display:block;margin-bottom:5px"></span>
-      <span class="${sk()}" style="width:88%;height:.75em;display:block;margin-bottom:5px"></span>
-      <span class="${sk()}" style="width:58%;height:.75em;display:block;margin-bottom:8px"></span>
-      <span class="${sk('rounded')}" style="width:100%;height:70px;display:block;margin-bottom:8px"></span>
-      <div style="display:flex;gap:8px">
-        <span class="${sk('pill')}" style="width:48px;height:13px"></span>
-        <span class="${sk('pill')}" style="width:55px;height:13px"></span>
-        <span class="${sk('pill')}" style="width:32px;height:13px"></span>
-      </div>
-    </div>`;
-      }
-    }
-
-    function renderForm(loading) {
-      var el = document.getElementById('slot-f');
-      if (!loading) {
-        el.innerHTML = `<div class="ask-fade-in">
-      ${['Full name', 'Email address', 'Company'].map(l => `
-        <div class="form-field">
-          <span class="form-label">${l}</span>
-          <input class="form-input" placeholder="${l}" readonly>
-        </div>`).join('')}
-      <button class="form-btn">Submit</button>
-    </div>`;
-      } else {
-        var fields = ['Full name', 'Email address', 'Company'].map((_, i) => `
-      <div style="margin-bottom:12px">
-        <span class="${sk()}" style="width:90px;height:.75em;display:block;margin-bottom:6px"></span>
-        <span class="${sk('rounded')}" style="width:100%;height:34px;display:block"></span>
-      </div>`).join('');
-        el.innerHTML = `<div class="ask-wrap">${fields}
-      <span class="${sk('pill')}" style="width:100px;height:34px;display:block;margin-top:4px"></span>
-    </div>`;
-      }
-    }
-
-    function renderPrimitives() {
-      var el = document.getElementById('prim-demo');
+    function renderPrims() {
+      var el = document.getElementById('prim-grid');
       var a = primAnim;
-      function skp(shape) { return 'ask-b ask-' + a + (shape ? ' ask-' + shape : ''); }
-
-      el.innerHTML = `
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
-    ${[
-          { label: 'SkeletonBlock', html: `<span class="${skp()}" style="width:100%;height:36px"></span>` },
-          {
-            label: 'SkeletonText (3 lines)', html: `
-        <span class="${skp()}" style="width:95%;height:1em;display:block;margin-bottom:6px"></span>
-        <span class="${skp()}" style="width:100%;height:1em;display:block;margin-bottom:6px"></span>
-        <span class="${skp()}" style="width:60%;height:1em;display:block"></span>`
-          },
-          { label: 'SkeletonAvatar', html: `<span class="${skp('circle')}" style="width:48px;height:48px"></span>` },
-          { label: 'SkeletonImage', html: `<span class="${skp('rounded')}" style="width:100%;height:80px"></span>` },
-          { label: 'SkeletonBadge', html: `<span class="${skp('pill')}" style="width:64px;height:20px;display:inline-block"></span>` },
-          { label: 'SkeletonButton', html: `<span class="${skp('pill')}" style="width:110px;height:36px"></span>` },
-          { label: 'SkeletonInput', html: `<span class="${skp('rounded')}" style="width:100%;height:36px"></span>` },
-          {
-            label: 'SkeletonCard', html: `
-        <span class="${skp('rounded')}" style="width:100%;height:70px;display:block;margin-bottom:8px"></span>
-        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
-          <span class="${skp('circle')}" style="width:28px;height:28px;flex-shrink:0"></span>
-          <div style="flex:1"><span class="${skp()}" style="width:60%;height:.8em;display:block;margin-bottom:5px"></span>
-          <span class="${skp()}" style="width:40%;height:.65em;display:block"></span></div>
-        </div>
-        <span class="${skp()}" style="width:100%;height:.75em;display:block;margin-bottom:5px"></span>
-        <span class="${skp()}" style="width:70%;height:.75em;display:block"></span>`
-          },
-          {
-            label: 'SkeletonForm', html: `
-        ${[1, 2].map(() => `<div style="margin-bottom:10px">
-          <span class="${skp()}" style="width:80px;height:.7em;display:block;margin-bottom:5px"></span>
-          <span class="${skp('rounded')}" style="width:100%;height:30px;display:block"></span>
-        </div>`).join('')}
-        <span class="${skp('pill')}" style="width:80px;height:28px;display:block"></span>`
-          },
-          {
-            label: 'SkeletonList (3 rows)', html: `
-        ${[1, 2, 3].map(() => `<div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
-          <span class="${skp('rounded')}" style="width:26px;height:26px;flex-shrink:0"></span>
-          <div style="flex:1"><span class="${skp()}" style="width:75%;height:.8em;display:block;margin-bottom:5px"></span>
-          <span class="${skp()}" style="width:45%;height:.65em;display:block"></span></div>
-        </div>`).join('')}`
-          },
-        ].map(p => `
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
-        <div style="padding:8px 11px;border-bottom:1px solid var(--border);font-size:10px;font-family:var(--mono);color:var(--txt2)">${p.label}</div>
-        <div style="padding:12px">${p.html}</div>
-      </div>`).join('')}
-  </div>`;
+      function p(shape) { return 'sk ' + a + (shape ? ' ' + shape : ''); }
+      var prims = [
+        { label: 'SkeletonSwitch', isNew: true, html: `<div style="width:44px;height:24px;background:var(--sk-base);border-radius:9999px;position:relative"><span class="${p('circle')}" style="width:18px;height:18px;position:absolute;top:3px;left:3px;background:rgba(255,255,255,.6)"></span></div>` },
+        { label: 'SkeletonSlider', isNew: true, html: `<div style="width:100%;height:20px;display:flex;align-items:center"><div style="flex:1;height:4px;background:var(--sk-base);border-radius:9999px;position:relative"><span class="${p()}" style="width:40%;height:100%;border-radius:9999px;display:block"></span><span class="${p('circle')}" style="width:16px;height:16px;position:absolute;top:-6px;left:38%"></span></div></div>` },
+        { label: 'SkeletonCalendar', isNew: true, html: `<div style="padding:10px;background:var(--sk-base);border-radius:10px"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px">${Array.from({ length: 7 }, (_, i) => `<span class="${p()}" style="width:20px;height:.6em;margin:0 auto;display:block"></span>`).join('')}</div>${Array.from({ length: 4 }, (_, r) => `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:3px">${Array.from({ length: 7 }, (_, c) => `<span class="${p('rounded')}" style="width:22px;height:22px;margin:0 auto;display:block"></span>`).join('')}</div>`).join('')}</div>` },
+        { label: 'SkeletonStepper', isNew: true, html: `<div style="display:flex;align-items:flex-start;width:100%">${[1, 2, 3, 4].map((s, i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1"><span class="${p('circle')}" style="width:26px;height:26px;margin:0 auto;display:block"></span><span class="${p()}" style="width:40px;height:.65em;margin:0 auto;display:block"></span></div>${i < 3 ? `<div style="flex:.5;height:2px;background:var(--sk-base);margin-top:12px;opacity:.5"></div>` : ''}`).join('')}</div>` },
+        { label: 'SkeletonBreadcrumb', isNew: true, html: `<div style="display:flex;align-items:center;gap:2px">${[50, 60, 45, 70].map((w, i) => `<span class="${p()}" style="width:${w}px;height:.8em;display:inline-block"></span>${i < 3 ? `<span style="width:8px;height:.8em;display:inline-block;opacity:.3;background:var(--sk-base);margin:0 4px"></span>` : ''}`).join('')}</div>` },
+        { label: 'SkeletonPagination', isNew: true, html: `<div style="display:flex;align-items:center;gap:6px">${[32, 32, 32, 24, 32, 32].map((w, i) => `<span class="${p('rounded')}" style="width:${w}px;height:32px;display:inline-block;flex-shrink:0"></span>`).join('')}</div>` },
+        { label: 'SkeletonMap', isNew: true, html: `<div style="width:100%;height:120px;background:var(--sk-base);border-radius:10px;position:relative;overflow:hidden"><span class="${p()}" style="position:absolute;top:50%;left:0;right:0;height:1px;transform:translateY(-50%);opacity:.3"></span><span class="${p()}" style="position:absolute;left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);opacity:.3"></span><span class="${p('rounded')}" style="position:absolute;bottom:10px;right:10px;width:28px;height:28px"></span></div>` },
+        { label: 'SkeletonChipInput', isNew: true, html: `<div style="width:100%;min-height:38px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 10px;background:var(--sk-base);border-radius:10px;opacity:.7">${['52px', '68px', '44px', '60px'].map(w => `<span class="${p('pill')}" style="width:${w};height:22px;display:inline-block"></span>`).join('')}</div>` },
+        { label: 'SkeletonKanban', isNew: true, html: `<div style="display:flex;gap:10px">${[1, 2, 3].map(() => `<div style="flex:1"><span class="${p()}" style="width:70px;height:.8em;display:block;margin-bottom:9px"></span>${[1, 2].map(() => `<div style="background:var(--sk-base);border-radius:6px;padding:9px;margin-bottom:7px"><span class="${p()}" style="width:70%;height:.78em;display:block;margin-bottom:5px"></span><span class="${p()}" style="width:90%;height:.68em;display:block;margin-bottom:5px"></span><div style="display:flex;gap:5px"><span class="${p('circle')}" style="width:18px;height:18px;flex-shrink:0"></span><span class="${p('pill')}" style="width:40px;height:16px"></span></div></div>`).join('')}</div>`).join('')}</div>` },
+        { label: 'SkeletonChatBubble', isNew: true, html: `<div style="display:flex;flex-direction:column">${[0, 1, 2, 3].map((i) => { const own = i === 1; return `<div style="display:flex;justify-content:${own ? 'flex-end' : 'flex-start'};gap:8px;margin-bottom:10px;align-items:flex-end">${!own ? `<span class="${p('circle')}" style="width:26px;height:26px;flex-shrink:0"></span>` : ''}<span class="${p('rounded')}" style="width:${[110, 90, 130, 100][i]}px;height:34px"></span>${own ? `<span class="${p('circle')}" style="width:26px;height:26px;flex-shrink:0"></span>` : ''}</div>` }).join('')}</div>` },
+      ];
+      el.innerHTML = prims.map(pr => `<div class="prim-box"><div class="prim-lbl">${pr.label}${pr.isNew ? '<span class="new-tag">new</span>' : ''}</div><div class="prim-body">${pr.html}</div></div>`).join('');
     }
 
-    function copyInstall(el) {
-      navigator.clipboard.writeText('npm install auto-loading-skeleton').catch(() => { });
-      el.querySelector('.cp').textContent = 'copied!';
-      setTimeout(() => el.querySelector('.cp').textContent = 'click to copy', 2000);
+    function renderCompare() {
+      var rows = [
+        ['Node types', '7', '12', '18', '25'],
+        ['Animations', '3', '4', '6', '7 (+ blink, flow)'],
+        ['Theme presets', '0', '6', '9', '12 (+ aurora, midnight, chalk, paper)'],
+        ['Slot system', '✗', '✗', '✗', '✓'],
+        ['Skeleton diffing', '✗', '✗', '✗', '✓'],
+        ['AI layout prediction', '✗', '✗', '✗', '✓'],
+        ['Visual DevTools', '✗', '✗', '✗', '✓'],
+        ['Streaming hook', '✗', '✗', '✗', '✓'],
+        ['Pagination hook', '✗', '✗', '✗', '✓'],
+        ['Form hook', '✗', '✗', '✗', '✓'],
+        ['Preload hook', '✗', '✗', '✗', '✓'],
+        ['Hooks total', '1', '4', '8', '12'],
+        ['Primitive components', '4', '10', '20', '30'],
+        ['LRU cache', '✗', '32 slots', '64 slots', '128 slots + diff'],
+        ['SkeletonProvider', '✗', '✓', '✓', '✓ + more opts'],
+        ['Error boundary', '✗', '✗', '✓', '✓'],
+        ['Plugin system', '✗', '✗', '✓', '✓'],
+        ['DOM observer', '✗', '✗', '✓', '✓'],
+        ['CSS @layer', '✗', '✗', '✗', '✓'],
+        ['coarse-pointer touch', '✗', '✗', '✗', '✓'],
+        ['forced-colors a11y', '✗', '✗', '✓', '✓'],
+        ['RTL support', '✗', '✗', '✗', '✓'],
+        ['data-sk shorthand', '✗', '✗', '✗', '✓'],
+        ['SWITCH / SLIDER', '✗', '✗', '✗', '✓'],
+        ['CALENDAR skeleton', '✗', '✗', '✗', '✓'],
+        ['KANBAN skeleton', '✗', '✗', '✗', '✓'],
+        ['CHAT BUBBLE skeleton', '✗', '✗', '✗', '✓'],
+        ['React compat', '≥16.8', '≥16.8', '≥17', '≥18'],
+      ];
+      var html = rows.map(([f, v1, v2, v3, v4]) => {
+        function cell(v, extra) { const isNo = v.startsWith('✗'); const isYes = v === '✓'; return `<td class="${isNo ? 'no' : isYes ? 'yes' : 'val'}"${extra || ''}>${v}</td>`; }
+        return `<tr><td>${f}</td>${cell(v1)}${cell(v2)}${cell(v3)}${cell(v4, ' class="v4c"')}</tr>`;
+      }).join('');
+      document.getElementById('cmp-body').innerHTML = html;
     }
 
-    function copyCode(id, btn) {
-      var text = document.getElementById(id).innerText;
-      navigator.clipboard.writeText(text).catch(() => { });
-      btn.textContent = 'copied!';
-      setTimeout(() => btn.textContent = 'copy', 1800);
+    function renderHooks() {
+      var hooks = [
+        { name: 'useSkeleton', sig: '(init?, opts?) → {loading, setLoading, skeletonProps}', desc: 'Basic loading state manager.', v: 'v1' },
+        { name: 'useSkeletonDelay', sig: '(loading, delay=200) → boolean', desc: 'Prevents flash on fast APIs. Only shows skeleton if loading lasts > delay ms.', v: 'v2' },
+        { name: 'useSkeletonTimeout', sig: '(loading, min=500) → boolean', desc: 'Minimum skeleton visibility. Prevents jarring instant transitions.', v: 'v2' },
+        { name: 'useSkeletonData', sig: '<T>(fetchFn, deps?) → {data, loading, error}', desc: 'Async fetch + loading in one hook. Auto-cancels on unmount.', v: 'v2' },
+        { name: 'useSkeletonGroup', sig: '(keys[], mode?) → {loading, setKey, state}', desc: 'Coordinate N loaders. loading stays true until ALL are done.', v: 'v3' },
+        { name: 'useSkeletonRetry', sig: '(fetchFn, opts?, deps?) → {data, loading, retryCount}', desc: 'Auto-retry with exponential backoff on failure.', v: 'v3' },
+        { name: 'useSkeletonIntersection', sig: '(fetchFn, opts?) → {ref, data, loading}', desc: 'Lazy loading — only fetches when element enters viewport.', v: 'v3' },
+        { name: 'withSkeleton', sig: '(Component, defaults?) → HOC', desc: 'Higher-order component wrapper for class components.', v: 'v2' },
+        { name: 'useSkeletonStream', sig: '(asyncGenFn, deps?) → {chunks, loading, isEmpty}', desc: 'React 18 streaming. Chunks array grows as data arrives via async iterable.', v: 'v4' },
+        { name: 'useSkeletonPagination', sig: '(fetchFn, opts?) → {data, loading, pageLoading, loadMore}', desc: 'Paginated loading: initial vs page-loading states tracked separately.', v: 'v4' },
+        { name: 'useSkeletonForm', sig: '(fields[]) → {loading, fieldLoading, setField}', desc: 'Per-field loading state for complex forms with multiple async sources.', v: 'v4' },
+        { name: 'useSkeletonPreload', sig: '(children, opts?) → void', desc: 'Pre-warms descriptor cache via requestIdleCallback for instant first skeleton.', v: 'v4' },
+      ];
+      var vColors = { 'v1': 'var(--ink3)', 'v2': 'var(--teal)', 'v3': 'var(--ink)', 'v4': 'var(--accent)' };
+      var vLabels = { 'v1': 'V1', 'v2': 'V2', 'v3': 'V3', 'v4': 'V4 new' };
+      document.getElementById('hook-grid').innerHTML = hooks.map(h => `
+    <div class="hook-card">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <div class="hook-name">${h.name}</div>
+        <span style="background:${vColors[h.v]};color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600">${vLabels[h.v]}</span>
+      </div>
+      <div class="hook-sig">${h.sig}</div>
+      <div class="hook-desc">${h.desc}</div>
+    </div>`).join('');
+    }
+
+    function copyInstall() {
+      navigator.clipboard.writeText('npm install auto-loading-skeleton-v4').catch(() => { });
+      event.target.textContent = 'copied!';
+      setTimeout(() => event.target.textContent = 'npm install auto-loading-skeleton-v4', 2000);
+    }
+    function cp(id, btn) {
+      navigator.clipboard.writeText(document.getElementById(id).innerText).catch(() => { });
+      btn.textContent = 'copied!'; setTimeout(() => btn.textContent = 'copy', 1800);
     }
 
     rerender();
-    renderPrimitives();
+    renderPrims();
+    renderCompare();
+    renderHooks();
   </script>
 </body>
 
-</html>
+</html>v4

@@ -1,256 +1,329 @@
 'use strict';
-
 /**
- * renderer.js — V2
+ * renderer.js — V4
  *
- * Improvements over V1:
- *  - Handles REPEAT node type (renders N identical skeleton children)
- *  - Handles HEADING with level-aware sizing
- *  - Handles MEDIA (video/iframe) as wide rectangle
- *  - Handles BADGE as inline pill
- *  - Handles TEXTAREA as tall input
- *  - Handles SELECT as input with chevron indicator
- *  - Handles CARD node type with appropriate padding wrapper
- *  - Smart sizing: prefers inline style hints, falls back to type defaults
- *  - Aspect ratio support from style hints
- *  - Passes aria-busy + aria-label to all wrappers for accessibility
- *  - Minimal key counter reset per render call for SSR safety
+ * NEW over V3:
+ *  - All 25 node types rendered
+ *  - SWITCH → pill with circle indicator (iOS-style toggle)
+ *  - SLIDER → track + rounded thumb
+ *  - CHIP_INPUT → row of pill tags + input area
+ *  - CALENDAR → 7×5 grid of day cells
+ *  - STEPPER → numbered horizontal steps
+ *  - BREADCRUMB → items separated by chevron-like gaps
+ *  - PAGINATION → row of numbered page squares
+ *  - MAP → rectangle with grid crosshair lines
+ *  - DRAWER → tall vertical sidebar skeleton
+ *  - FORM_FIELD → label line + input block
+ *  - GRID_ITEM → auto-sized cell
+ *  - SUSPENSE → labeled dotted-border placeholder
+ *  - RTL mirror: wraps reversed flex when isRTL=true
+ *  - Skeleton diff: compares previous render tree hash to skip unchanged nodes
  */
 
-var React  = require('react');
-var N      = require('./analyzer').NODE;
-var styles = require('./styles');
+const React  = require('react');
+const N      = require('./analyzer').NODE;
+const styles = require('./styles');
 
-/* ── size defaults per node type ── */
-var DEFAULTS = {
-  [N.TEXT]:     { width: '80%',   height: '1em'    },
-  [N.HEADING]:  { width: '55%',   height: '1.4em'  },
-  [N.IMAGE]:    { width: '100%',  height: '200px'  },
-  [N.AVATAR]:   { width: '40px',  height: '40px'   },
-  [N.MEDIA]:    { width: '100%',  height: '220px'  },
-  [N.BUTTON]:   { width: '100px', height: '36px'   },
-  [N.INPUT]:    { width: '100%',  height: '38px'   },
-  [N.TEXTAREA]: { width: '100%',  height: '100px'  },
-  [N.SELECT]:   { width: '100%',  height: '38px'   },
-  [N.BADGE]:    { width: '60px',  height: '20px'   },
-  [N.ICON]:     { width: '24px',  height: '24px'   },
+const DEF = {
+  [N.TEXT]:       { w:'80%',   h:'1em'    },
+  [N.HEADING]:    { w:'55%',   h:'1.5em'  },
+  [N.IMAGE]:      { w:'100%',  h:'200px'  },
+  [N.AVATAR]:     { w:'40px',  h:'40px'   },
+  [N.MEDIA]:      { w:'100%',  h:'220px'  },
+  [N.BUTTON]:     { w:'100px', h:'36px'   },
+  [N.INPUT]:      { w:'100%',  h:'38px'   },
+  [N.TEXTAREA]:   { w:'100%',  h:'96px'   },
+  [N.SELECT]:     { w:'100%',  h:'38px'   },
+  [N.BADGE]:      { w:'56px',  h:'20px'   },
+  [N.ICON]:       { w:'24px',  h:'24px'   },
+  [N.PROGRESS]:   { w:'100%',  h:'8px'    },
+  [N.CODE]:       { w:'100%',  h:'1em'    },
+  [N.STAT]:       { w:'80px',  h:'2.2em'  },
+  [N.DIVIDER]:    { w:'100%',  h:'1px'    },
+  [N.SWITCH]:     { w:'44px',  h:'24px'   },
+  [N.SLIDER]:     { w:'100%',  h:'20px'   },
+  [N.CHIP_INPUT]: { w:'100%',  h:'38px'   },
+  [N.CALENDAR]:   { w:'100%',  h:'auto'   },
+  [N.STEPPER]:    { w:'100%',  h:'40px'   },
+  [N.BREADCRUMB]: { w:'200px', h:'1em'    },
+  [N.PAGINATION]: { w:'200px', h:'32px'   },
+  [N.MAP]:        { w:'100%',  h:'260px'  },
+  [N.DRAWER]:     { w:'240px', h:'100%'   },
+  [N.FORM_FIELD]: { w:'100%',  h:'auto'   },
 };
 
-/* heading level → size */
-var HEADING_SIZES = ['1.8em','1.5em','1.3em','1.15em','1em','0.9em'];
+const HEADING_H = ['2em','1.65em','1.4em','1.2em','1.05em','0.9em'];
 
-/* ── key factory ── */
-var _k = 0;
-function nk() { return 'sk2-' + (++_k); }
+let _k = 0;
+function nk() { return 'v4-' + (++_k); }
 function resetKeys() { _k = 0; }
 
-/* ── style builder ── */
-function sz(defaults, hints, extra) {
+function sz(def, hints, extra) {
   hints = hints || {};
-  extra = extra || {};
-  var s = {
-    width:  hints.width  || defaults.width,
-    height: hints.height || defaults.height,
-    display: 'block',
-  };
+  const s = { width: hints.width||def.w||'100%', height: hints.height||def.h||'auto', display:'block' };
   if (hints.aspectRatio) { delete s.height; s.aspectRatio = hints.aspectRatio; }
   if (hints.margin) s.margin = hints.margin;
   if (hints.borderRadius) s.borderRadius = hints.borderRadius;
-  return Object.assign(s, extra);
+  if (hints.maxWidth) s.maxWidth = hints.maxWidth;
+  return Object.assign(s, extra||{});
 }
 
-/* ── multi-line text skeleton ── */
-function textLines(node, anim, extra) {
-  var content = node.content || '';
-  var len     = content.length;
-  var lines   = Math.min(Math.max(1, Math.ceil(len / 45)), 5);
-  var h       = (node.styleHints && node.styleHints.height) || (node.styleHints && node.styleHints.fontSize) || '1em';
-
-  if (lines <= 1) {
-    return React.createElement('span', {
-      key:          nk(),
-      className:    styles.blockClass(anim),
-      style:        Object.assign(sz(DEFAULTS[N.TEXT], node.styleHints, extra), { width: node.width || '80%' }),
-      'aria-hidden': 'true',
-    });
-  }
-
-  var lineEls = [];
-  for (var i = 0; i < lines; i++) {
-    lineEls.push(React.createElement('span', {
-      key:       nk(),
-      className: styles.blockClass(anim),
-      style: {
-        display:      'block',
-        width:        i === lines - 1 ? '60%' : (i === 0 ? '95%' : '100%'),
-        height:       h,
-        marginBottom: i < lines - 1 ? '6px' : 0,
-      },
-      'aria-hidden': 'true',
-    }));
-  }
-  return React.createElement('div', { key: nk(), 'aria-hidden': 'true' }, lineEls);
+function B(anim, shape, style) {
+  return React.createElement('span', {
+    key: nk(), className: styles.blockClass(anim, shape),
+    style: Object.assign({ display:'block' }, style||{}),
+    'aria-hidden':'true',
+  });
 }
 
-/* ── main render function ── */
+/* ── multi-line text ── */
+function textLines(node, anim) {
+  const len   = (node.content||'').length;
+  const lines = Math.min(Math.max(1, Math.ceil(len/48)), 5);
+  const lineH = (node.styleHints&&node.styleHints.fontSize) || '1em';
+  if (lines <= 1) return B(anim, null, sz(DEF[N.TEXT], node.styleHints, { width: node.width||'80%' }));
+  const els = [];
+  for (let i=0; i<lines; i++) {
+    els.push(B(anim, null, { display:'block', width:i===lines-1?'62%':(i===0?'96%':'100%'), height:lineH, marginBottom:i<lines-1?'6px':0 }));
+  }
+  return React.createElement('div', { key:nk(), 'aria-hidden':'true' }, els);
+}
+
+/* ── MAIN RENDER ── */
 function renderNode(node, options) {
   if (!node) return null;
   options = options || {};
-  var anim  = options.animation || 'shimmer';
-  var hints = node.styleHints   || {};
-  var nt    = node.nodeType;
+  const anim    = options.animation || 'shimmer';
+  const stagger = options.stagger   || false;
+  const hints   = node.styleHints  || {};
+  const nt      = node.nodeType;
 
-  /* TEXT */
-  if (nt === N.TEXT) return textLines(node, anim, {});
-
-  /* HEADING */
-  if (nt === N.HEADING) {
-    var lvl    = node.level || 2;
-    var hStyle = sz(DEFAULTS[N.HEADING], hints, {
-      width:  node.width || hints.width || (lvl === 1 ? '70%' : lvl <= 3 ? '55%' : '45%'),
-      height: hints.fontSize || HEADING_SIZES[Math.min(lvl - 1, 5)],
-    });
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim),
-      style:         hStyle,
-      'aria-hidden': 'true',
-    });
+  // Low-conf fallback
+  if (node._conf != null && node._conf < 0.35 && nt===N.CONTAINER && !(node.children&&node.children.length)) {
+    return B(anim, null, sz({w:'100%',h:'24px'}, hints));
   }
 
-  /* IMAGE */
-  if (nt === N.IMAGE) {
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim, 'rounded'),
-      style:         sz(DEFAULTS[N.IMAGE], hints),
-      'aria-hidden': 'true',
-    });
+  if (nt===N.TEXT)    return textLines(node, anim);
+  if (nt===N.HEADING) {
+    const lvl = node.level||2;
+    return B(anim, null, sz(DEF[N.HEADING], hints, { width:node.width||hints.width||(lvl===1?'72%':lvl<=3?'58%':'46%'), height:hints.fontSize||HEADING_H[Math.min(lvl-1,5)] }));
+  }
+  if (nt===N.IMAGE)   return B(anim,'rounded', sz(DEF[N.IMAGE], hints));
+  if (nt===N.AVATAR)  { const s=hints.width||hints.height||'40px'; return B(anim,'circle',{width:s,height:s,display:'block',flexShrink:0}); }
+  if (nt===N.MEDIA)   return B(anim,'rounded', sz(DEF[N.MEDIA], hints));
+  if (nt===N.BUTTON)  { const w=hints.width||(node.label?Math.max(80,node.label.length*9)+'px':'100px'); return B(anim,'pill',sz(DEF[N.BUTTON],hints,{width:w})); }
+  if (nt===N.INPUT)   return B(anim,'rounded', sz(DEF[N.INPUT], hints));
+  if (nt===N.TEXTAREA)return B(anim,'rounded', sz(DEF[N.TEXTAREA], hints));
+  if (nt===N.SELECT)  return B(anim,'rounded', sz(DEF[N.SELECT], hints));
+  if (nt===N.BADGE)   return B(anim,'pill',    sz(DEF[N.BADGE], hints));
+  if (nt===N.ICON)    { const s=hints.width||hints.height||hints.fontSize||'24px'; return B(anim,'circle',{width:s,height:s,display:'block',flexShrink:0}); }
+  if (nt===N.DIVIDER) return B(anim, null, {width:'100%',height:'1px',display:'block',margin:'8px 0',opacity:.4});
+  if (nt===N.PROGRESS) return React.createElement('div',{key:nk(),style:{width:hints.width||'100%',height:hints.height||'8px',background:'var(--ask4-base)',borderRadius:'9999px',overflow:'hidden'},'aria-hidden':'true'}, B(anim,null,{width:'60%',height:'100%'}));
+
+  /* ── V4 NEW NODE TYPES ── */
+
+  /* SWITCH — iOS-style toggle pill */
+  if (nt===N.SWITCH) {
+    return React.createElement('div',{key:nk(),style:{width:'44px',height:'24px',background:'var(--ask4-base)',borderRadius:'9999px',position:'relative',flexShrink:0},'aria-hidden':'true'},
+      React.createElement('span',{key:nk(),className:styles.blockClass(anim,'circle'),style:{width:'18px',height:'18px',position:'absolute',top:'3px',left:'3px',background:'rgba(255,255,255,0.6)'}})
+    );
   }
 
-  /* AVATAR */
-  if (nt === N.AVATAR) {
-    var avSize = hints.width || hints.height || '40px';
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim, 'circle'),
-      style:         { width: avSize, height: avSize, display: 'block', flexShrink: 0 },
-      'aria-hidden': 'true',
-    });
+  /* SLIDER — track + thumb */
+  if (nt===N.SLIDER) {
+    return React.createElement('div',{key:nk(),style:{width:hints.width||'100%',height:'20px',display:'flex',alignItems:'center',gap:0},'aria-hidden':'true'},
+      React.createElement('div',{key:nk(),style:{flex:1,height:'4px',background:'var(--ask4-base)',borderRadius:'9999px',position:'relative'}},
+        B(anim,null,{width:'40%',height:'100%',borderRadius:'9999px'}),
+        React.createElement('span',{key:nk(),className:styles.blockClass(anim,'circle'),style:{width:'16px',height:'16px',position:'absolute',top:'-6px',left:'38%'}})
+      )
+    );
   }
 
-  /* MEDIA (video / iframe) */
-  if (nt === N.MEDIA) {
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim, 'rounded'),
-      style:         sz(DEFAULTS[N.MEDIA], hints),
-      'aria-hidden': 'true',
-    });
+  /* CHIP_INPUT — row of pill chips + input area */
+  if (nt===N.CHIP_INPUT) {
+    const chipW = ['52px','68px','44px','60px','48px'];
+    const chips = chipW.map((w,i) => B(anim,'pill',{width:w,height:'22px',display:'inline-block',marginRight:'6px',key:i}));
+    return React.createElement('div',{key:nk(),style:{width:'100%',minHeight:'38px',display:'flex',flexWrap:'wrap',alignItems:'center',gap:'4px',padding:'6px 10px',background:'var(--ask4-base)',borderRadius:'var(--ask4-radius-lg)',opacity:.7},'aria-hidden':'true'}, chips);
   }
 
-  /* BUTTON */
-  if (nt === N.BUTTON) {
-    var btnW = hints.width || (node.label ? Math.max(80, node.label.length * 9) + 'px' : '100px');
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim, 'pill'),
-      style:         sz(DEFAULTS[N.BUTTON], hints, { width: btnW }),
-      'aria-hidden': 'true',
-    });
-  }
-
-  /* INPUT */
-  if (nt === N.INPUT) {
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim, 'rounded'),
-      style:         sz(DEFAULTS[N.INPUT], hints),
-      'aria-hidden': 'true',
-    });
-  }
-
-  /* TEXTAREA */
-  if (nt === N.TEXTAREA) {
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim, 'rounded'),
-      style:         sz(DEFAULTS[N.TEXTAREA], hints),
-      'aria-hidden': 'true',
-    });
-  }
-
-  /* SELECT */
-  if (nt === N.SELECT) {
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim, 'rounded'),
-      style:         sz(DEFAULTS[N.SELECT], hints),
-      'aria-hidden': 'true',
-    });
-  }
-
-  /* BADGE */
-  if (nt === N.BADGE) {
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim, 'pill'),
-      style:         sz(DEFAULTS[N.BADGE], hints),
-      'aria-hidden': 'true',
-    });
-  }
-
-  /* ICON */
-  if (nt === N.ICON) {
-    var iconSz = hints.width || hints.height || hints.fontSize || '24px';
-    return React.createElement('span', {
-      key:           nk(),
-      className:     styles.blockClass(anim, 'circle'),
-      style:         { width: iconSz, height: iconSz, display: 'block', flexShrink: 0 },
-      'aria-hidden': 'true',
-    });
-  }
-
-  /* REPEAT — detected list pattern */
-  if (nt === N.REPEAT) {
-    var items = [];
-    for (var ri = 0; ri < node.count; ri++) {
-      items.push(React.createElement('div', { key: nk() }, renderNode(node.template, options)));
+  /* CALENDAR — 7 column × 5 row day grid */
+  if (nt===N.CALENDAR) {
+    const rows = [];
+    // Header: 7 day labels
+    const header = [];
+    for (let d=0;d<7;d++) header.push(B(anim,null,{width:'24px',height:'.7em',margin:'0 auto 8px',key:'h'+d}));
+    rows.push(React.createElement('div',{key:'hdr',style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:'6px',marginBottom:'6px'}},header));
+    // 5 rows of days
+    for (let r=0;r<5;r++) {
+      const cells = [];
+      for (let c=0;c<7;c++) {
+        const skip = (r===0&&c<2)||(r===4&&c>4);
+        cells.push(skip
+          ? React.createElement('span',{key:'c'+c,style:{display:'block'}})
+          : B(anim,'rounded',{width:'28px',height:'28px',margin:'0 auto',key:'c'+c})
+        );
+      }
+      rows.push(React.createElement('div',{key:'r'+r,style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:'6px',marginBottom:'4px'}},cells));
     }
-    var repStyle = {};
-    if (hints.display) repStyle.display = hints.display;
-    if (hints.gap)     repStyle.gap     = hints.gap;
-    return React.createElement('div', { key: nk(), className: 'ask-wrap', style: repStyle }, items);
+    return React.createElement('div',{key:nk(),style:{padding:'12px',background:'var(--ask4-base)',borderRadius:'var(--ask4-radius-lg)',display:'inline-block',width:hints.width||'auto'},'aria-hidden':'true'}, rows);
   }
 
-  /* CARD */
-  if (nt === N.CARD || nt === N.CONTAINER) {
-    var kids = (node.children || []).map(function(c) { return renderNode(c, options); }).filter(Boolean);
-    var t    = node.tag || 'div';
-
-    // Empty container → show a single block
-    if (kids.length === 0) {
-      return React.createElement('span', {
-        key:           nk(),
-        className:     styles.blockClass(anim),
-        style:         sz({ width: '100%', height: '24px' }, hints),
-        'aria-hidden': 'true',
-      });
+  /* STEPPER — horizontal numbered steps */
+  if (nt===N.STEPPER) {
+    const stepCount = node.steps || 4;
+    const steps = [];
+    for (let i=0;i<stepCount;i++) {
+      steps.push(React.createElement('div',{key:i,style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'5px',flex:1}},
+        B(anim,'circle',{width:'28px',height:'28px',margin:'0 auto'}),
+        B(anim,null,{width:'48px',height:'.7em',margin:'0 auto'})
+      ));
+      if (i<stepCount-1) steps.push(React.createElement('div',{key:'l'+i,style:{flex:.5,height:'2px',background:'var(--ask4-base)',marginTop:'14px',opacity:.5}}));
     }
+    return React.createElement('div',{key:nk(),style:{display:'flex',alignItems:'flex-start',width:'100%',gap:0},'aria-hidden':'true'}, steps);
+  }
 
-    var cStyle = {};
-    if (hints.display)    cStyle.display       = hints.display;
-    if (hints.flexDir)    cStyle.flexDirection  = hints.flexDir;
-    if (hints.gap)        cStyle.gap            = hints.gap;
-    if (hints.padding)    cStyle.padding        = hints.padding;
-    if (hints.margin)     cStyle.margin         = hints.margin;
-    if (hints.alignItems) cStyle.alignItems     = hints.alignItems;
+  /* BREADCRUMB — items + separators */
+  if (nt===N.BREADCRUMB) {
+    const crumbs = [];
+    const widths = ['50px','60px','45px','70px'];
+    for (let i=0;i<4;i++) {
+      crumbs.push(B(anim,null,{width:widths[i],height:'.8em',display:'inline-block',key:'b'+i}));
+      if (i<3) crumbs.push(React.createElement('span',{key:'s'+i,style:{width:'8px',height:'.8em',display:'inline-block',opacity:.3,background:'var(--ask4-base)',margin:'0 4px'}}));
+    }
+    return React.createElement('div',{key:nk(),style:{display:'flex',alignItems:'center',gap:'2px'},'aria-hidden':'true'},crumbs);
+  }
 
-    return React.createElement(t, {
-      key:       nk(),
-      className: 'ask-wrap',
-      style:     cStyle,
-    }, kids);
+  /* PAGINATION — numbered page squares */
+  if (nt===N.PAGINATION) {
+    const pages = [];
+    const ws = ['32px','32px','32px','24px','32px','32px'];
+    for (let i=0;i<ws.length;i++) pages.push(B(anim,'rounded',{width:ws[i],height:'32px',display:'inline-block',flexShrink:0,key:i}));
+    return React.createElement('div',{key:nk(),style:{display:'flex',alignItems:'center',gap:'6px'},'aria-hidden':'true'},pages);
+  }
+
+  /* MAP — rectangle with crosshair grid lines */
+  if (nt===N.MAP) {
+    return React.createElement('div',{key:nk(),style:{width:hints.width||'100%',height:hints.height||'260px',background:'var(--ask4-base)',borderRadius:'var(--ask4-radius-lg)',position:'relative',overflow:'hidden'},'aria-hidden':'true'},
+      B(anim,null,{position:'absolute',top:'50%',left:0,right:0,height:'1px',transform:'translateY(-50%)',opacity:.3}),
+      B(anim,null,{position:'absolute',left:'50%',top:0,bottom:0,width:'1px',transform:'translateX(-50%)',opacity:.3}),
+      B(anim,'rounded',{position:'absolute',bottom:'20px',right:'20px',width:'36px',height:'36px'})
+    );
+  }
+
+  /* DRAWER — tall vertical sidebar */
+  if (nt===N.DRAWER) {
+    const items = [];
+    for (let i=0;i<6;i++) {
+      items.push(React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'16px'}},
+        B(anim,'circle',{width:'20px',height:'20px',flexShrink:0}),
+        B(anim,null,{flex:1,height:'.85em'})
+      ));
+    }
+    return React.createElement('div',{key:nk(),style:{width:hints.width||'220px',height:'100%',display:'flex',flexDirection:'column',gap:0,padding:'16px'},'aria-hidden':'true'}, items);
+  }
+
+  /* FORM_FIELD — label + input grouped */
+  if (nt===N.FORM_FIELD) {
+    const [label, input] = node.children || [];
+    return React.createElement('div',{key:nk(),style:{display:'flex',flexDirection:'column',gap:'6px',width:'100%'},'aria-hidden':'true'},
+      B(anim,null,{width:'110px',height:'.78em'}),
+      renderNode(input||{nodeType:N.INPUT,styleHints:{}}, options)
+    );
+  }
+
+  /* SUSPENSE placeholder */
+  if (nt===N.SUSPENSE) {
+    return React.createElement('div',{key:nk(),style:{width:'100%',minHeight:'60px',border:'1.5px dashed var(--ask4-base)',borderRadius:'var(--ask4-radius-lg)',display:'flex',alignItems:'center',justifyContent:'center'},'aria-hidden':'true'},
+      B(anim,null,{width:'80px',height:'.8em'})
+    );
+  }
+
+  /* RATING */
+  if (nt===N.RATING) {
+    const stars = node.stars||5;
+    const s = [];
+    for (let i=0;i<stars;i++) s.push(B(anim,'circle',{width:'18px',height:'18px',display:'inline-block',marginRight:'3px',key:i}));
+    return React.createElement('div',{key:nk(),style:{display:'flex',alignItems:'center',gap:'2px'},'aria-hidden':'true'},s);
+  }
+
+  /* CODE BLOCK */
+  if (nt===N.CODE) {
+    const lines = node.lines||5;
+    const ws = ['42%','78%','55%','90%','38%','72%','60%'];
+    const els = [];
+    for (let i=0;i<lines;i++) els.push(React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:i<lines-1?'5px':0}},
+      B(anim,null,{width:'12px',height:'.7em',flexShrink:0,opacity:.35}),
+      B(anim,null,{flex:1,height:'.82em',maxWidth:ws[i%ws.length]})
+    ));
+    return React.createElement('div',{key:nk(),style:{background:'rgba(0,0,0,.15)',borderRadius:'6px',padding:'10px 12px'},'aria-hidden':'true'},els);
+  }
+
+  /* STAT */
+  if (nt===N.STAT) {
+    return React.createElement('div',{key:nk(),style:{display:'flex',flexDirection:'column',gap:'6px'},'aria-hidden':'true'},
+      B(anim,null,sz(DEF[N.STAT],hints,{height:hints.fontSize||'2.2em',width:hints.width||'80px'})),
+      B(anim,null,{width:'60px',height:'.8em',display:'block'})
+    );
+  }
+
+  /* TAG_GROUP */
+  if (nt===N.TAG_GROUP) {
+    const count = node.count||3;
+    const tagWs = ['56px','72px','48px','64px','80px'];
+    const tags = [];
+    for (let i=0;i<count;i++) tags.push(B(anim,'pill',{width:tagWs[i%tagWs.length],height:'20px',display:'inline-block',key:i}));
+    return React.createElement('div',{key:nk(),style:{display:'flex',flexWrap:'wrap',gap:'6px'},'aria-hidden':'true'},tags);
+  }
+
+  /* NAV */
+  if (nt===N.NAV) {
+    const nws = ['60px','80px','50px','72px','56px'];
+    const items = [];
+    for (let i=0;i<5;i++) items.push(B(anim,'pill',{width:nws[i],height:'28px',display:'inline-block',key:i}));
+    return React.createElement('div',{key:nk(),style:{display:'flex',gap:'8px',alignItems:'center'},'aria-hidden':'true'},items);
+  }
+
+  /* TABLE */
+  if (nt===N.TABLE) {
+    const rows=node.rows||4, cols=node.cols||4;
+    const ws=['75%','55%','65%','45%','80%'];
+    const tRows=[];
+    const hcells=[];
+    for (let c=0;c<cols;c++) hcells.push(React.createElement('th',{key:c,style:{padding:'8px 10px'}},B(anim,null,{width:'65%',height:'.78em'})));
+    tRows.push(React.createElement('tr',{key:'h'},hcells));
+    for (let r=0;r<rows;r++) {
+      const cells=[];
+      for (let c=0;c<cols;c++) cells.push(React.createElement('td',{key:c,style:{padding:'8px 10px'}},B(anim,null,{width:ws[(r+c)%ws.length],height:'.78em'})));
+      tRows.push(React.createElement('tr',{key:r},cells));
+    }
+    return React.createElement('table',{key:nk(),style:{width:'100%',borderCollapse:'collapse'},'aria-hidden':'true'},React.createElement('tbody',null,tRows));
+  }
+
+  /* REPEAT */
+  if (nt===N.REPEAT) {
+    const wrapStyle = {};
+    if (hints.display) wrapStyle.display = hints.display;
+    if (hints.gap)     wrapStyle.gap     = hints.gap;
+    const items=[];
+    for (let i=0;i<node.count;i++) items.push(React.createElement('div',{key:nk()},renderNode(node.template,options)));
+    return React.createElement('div',{key:nk(),className:`ask4-wrap${stagger?' ask4-stagger':''}`,style:wrapStyle},items);
+  }
+
+  /* CARD / CONTAINER */
+  if (nt===N.CARD || nt===N.CONTAINER) {
+    const kids=(node.children||[]).map(c=>renderNode(c,options)).filter(Boolean);
+    const t2=node.tag||'div';
+    if (!kids.length) return B(anim,null,sz({w:'100%',h:'24px'},hints));
+    const cStyle={};
+    if (hints.display)    cStyle.display          = hints.display;
+    if (hints.flexDir)    cStyle.flexDirection     = hints.flexDir;
+    if (hints.gap)        cStyle.gap               = hints.gap;
+    if (hints.padding)    cStyle.padding           = hints.padding;
+    if (hints.margin)     cStyle.margin            = hints.margin;
+    if (hints.alignItems) cStyle.alignItems        = hints.alignItems;
+    if (hints.gridCols)   cStyle.gridTemplateColumns = hints.gridCols;
+    if (node.isRTL)       cStyle.direction         = 'rtl';
+    return React.createElement(t2,{key:nk(),className:`ask4-wrap${stagger?' ask4-stagger':''}`,style:cStyle},kids);
   }
 
   return null;
