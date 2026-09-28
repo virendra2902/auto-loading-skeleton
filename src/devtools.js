@@ -85,7 +85,7 @@ function renderTree(node, depth) {
 }
 
 /* ── Main DevTools Component ── */
-function SkeletonDevTools(props) {
+function SkeletonDevTools() {
   // No-op in production
   if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production') {
     return null;

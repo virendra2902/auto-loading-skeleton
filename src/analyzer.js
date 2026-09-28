@@ -314,7 +314,7 @@ function fingerprint(el, depth) {
 }
 
 /* ── MAIN ANALYZER ── */
-function analyzeElement(element, depth, opts, _siblings) {
+function analyzeElement(element, depth, opts) {
   depth = depth || 0;
   opts  = opts  || {};
   const maxDepth        = opts.maxDepth        != null ? opts.maxDepth        : 12;
