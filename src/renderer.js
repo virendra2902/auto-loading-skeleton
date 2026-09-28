@@ -224,7 +224,7 @@ function renderNode(node, options) {
 
   /* FORM_FIELD — label + input grouped */
   if (nt===N.FORM_FIELD) {
-    const [label, input] = node.children || [];
+const [, input] = node.children || [];
     return React.createElement('div',{key:nk(),style:{display:'flex',flexDirection:'column',gap:'6px',width:'100%'},'aria-hidden':'true'},
       B(anim,null,{width:'110px',height:'.78em'}),
       renderNode(input||{nodeType:N.INPUT,styleHints:{}}, options)
