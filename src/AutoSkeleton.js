@@ -22,7 +22,7 @@ const ctx                = require('./context');
 const { SkeletonErrorBoundary } = require('./errorBoundary');
 const plugins            = require('./plugins');
 const { SkeletonDiffCache } = require('./differ');
-const { collectSlots, slotsToDescriptors, isSlotElement } = require('./slots');
+const { collectSlots, slotsToDescriptors } = require('./slots');
 const devtools           = require('./devtools');
 
 const _diffCaches = new WeakMap(); // per-component instance diff cache
