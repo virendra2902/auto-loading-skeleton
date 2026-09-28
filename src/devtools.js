@@ -93,7 +93,7 @@ function SkeletonDevTools(props) {
 
   const [, forceUpdate] = React.useReducer(n => n + 1, 0);
   const [open, setOpen]       = React.useState(false);
-  const [selected, setSelected] = React.useState(null);
+const [, setSelected] = React.useState(null);
   const [tab, setTab]         = React.useState('tree');
 
   React.useEffect(() => {
