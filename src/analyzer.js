@@ -485,7 +485,7 @@ function analyzeElement(element, depth, opts, _siblings) {
 
   // Recurse
   const children = [];
-  childArr.forEach((child, i) => {
+childArr.forEach((child) => {
     const res = analyzeElement(child, depth+1, opts, childArr);
     if (Array.isArray(res)) res.forEach(r2 => { if(r2 && r2.nodeType !== NODE.SKIP) children.push(r2); });
     else if (res && res.nodeType !== NODE.SKIP) children.push(res);
